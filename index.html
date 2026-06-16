@@ -19,7 +19,7 @@
             height: -webkit-fill-available;
             overflow: hidden;
             background-color: var(--theme-bg);
-            transition: background-color 0.3s ease;
+            transition: background-color 0.4s cubic-bezier(0.4, 0, 0.2, 1);
         }
 
         :root {
@@ -37,11 +37,23 @@
         .theme-btn:hover { background-color: var(--theme-primary-hover); }
 
         ::-webkit-scrollbar { width: 4px; }
-        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.05); }
+        ::-webkit-scrollbar-track { background: rgba(0,0,0,0.02); }
         ::-webkit-scrollbar-thumb { background: var(--theme-primary); border-radius: 10px; }
 
         .slide-panel {
-            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            will-change: transform;
+            transform: translateZ(0); /* Donanım Hızlandırması */
+        }
+
+        /* Mesaj Balonlarının Parlama Efekti */
+        .highlight-message {
+            animation: pulse-ring 1.5s ease-out;
+        }
+
+        @keyframes pulse-ring {
+            0% { box-shadow: 0 0 0 0px rgba(59, 130, 246, 0.7); }
+            100% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
         }
     </style>
 </head>
@@ -49,8 +61,8 @@
 
     <!-- GİRİŞ EKRANI (LOCK SCREEN) -->
     <div id="lockScreen" class="fixed inset-0 bg-[#070b19] z-50 flex flex-col items-center justify-center p-4">
-        <div class="bg-[#0f172a] border border-blue-500/20 p-8 rounded-[2rem] w-full max-w-md text-center shadow-2xl shadow-blue-500/5">
-            <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">
+        <div class="bg-[#0f172a] border border-blue-500/20 p-8 rounded-[2rem] w-full max-w-md text-center shadow-2xl shadow-blue-500/5 transition-transform duration-300">
+            <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl shadow-inner">
                 <i class="fa-solid fa-user-shield"></i>
             </div>
             
@@ -65,28 +77,28 @@
             <div class="space-y-4 text-left" id="loginFormFields">
                 <!-- Kullanıcı Adı -->
                 <div>
-                    <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-white focus:outline-none focus:border-blue-500 text-sm transition-colors">
+                    <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-white focus:outline-none focus:border-blue-500 text-sm transition-all duration-300">
                     <p id="usernameError" class="text-red-400 text-[11px] mt-1.5 ml-2 hidden"></p>
                 </div>
                 
                 <!-- PIN Kodu (Şifre Göster/Gizle İkonlu) -->
                 <div class="relative">
-                    <input type="password" id="pinInput" placeholder="Şifre PIN Kodu" maxlength="6" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-center text-white tracking-widest focus:outline-none focus:border-blue-500 text-sm transition-colors">
-                    <button onclick="togglePinVisibility()" type="button" class="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors">
-                        <i id="eyeIcon" class="fa-solid fa-eye"></i>
+                    <input type="password" id="pinInput" placeholder="Şifre PIN Kodu" maxlength="6" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-center text-white tracking-widest focus:outline-none focus:border-blue-500 text-sm transition-all duration-300">
+                    <button onclick="togglePinVisibility()" type="button" class="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors duration-200">
+                        <i id="eyeIcon" class="fa-solid fa-eye text-sm"></i>
                     </button>
                     <p id="pinError" class="text-red-400 text-[11px] mt-1.5 ml-2 hidden"></p>
                 </div>
 
-                <!-- Beni Hatırla Seçeneği -->
+                <!-- Beni Hatırla -->
                 <div class="flex items-center gap-2 pl-2">
                     <input type="checkbox" id="rememberMeCheckbox" class="w-4 h-4 rounded border-slate-800 bg-[#1e293b] text-blue-600 focus:ring-blue-500">
-                    <label for="rememberMeCheckbox" class="text-xs text-slate-400 cursor-pointer">Beni Unutma (Otomatik Giriş)</label>
+                    <label for="rememberMeCheckbox" class="text-xs text-slate-400 cursor-pointer">Beni Unutma</label>
                 </div>
 
                 <p id="generalLoginError" class="text-red-400 text-xs text-center font-medium hidden"></p>
                 
-                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/20">
+                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 shadow-lg shadow-blue-600/15">
                     Giriş Yap
                 </button>
             </div>
@@ -198,7 +210,7 @@
             </div>
 
             <!-- Üst İsim Tıklama Menüsü (Sohbeti Sil/Temizle) -->
-            <div id="chatActionsMenu" class="hidden absolute top-16 left-4 bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow-2xl z-40 w-48">
+            <div id="chatActionsMenu" class="hidden absolute top-16 left-4 bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow-2xl z-40 w-48 animate-fade-in">
                 <button onclick="deleteChatForMe()" class="w-full text-left text-red-400 hover:bg-red-500/10 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-trash-can"></i> Sohbeti Temizle (Sil)
                 </button>
@@ -207,8 +219,17 @@
             <!-- Mesaj Listesi -->
             <div id="chatBackground" class="flex-1 overflow-y-auto p-4 flex flex-col justify-end bg-cover bg-center transition-all relative">
                 <div id="messageContainer" class="space-y-3 overflow-y-auto pr-1">
-                    <!-- Mesajlar -->
+                    <!-- Mesajlar buraya akacak -->
                 </div>
+            </div>
+
+            <!-- ZARİF YANIT VERME ÖNİZLEME ALANI -->
+            <div id="replyPreviewBar" class="hidden px-5 py-3 bg-[#0c1224] border-t border-slate-900 flex items-center justify-between shrink-0 rounded-t-2xl animate-fade-in">
+                <div class="border-l-2 border-blue-500 pl-3 min-w-0">
+                    <span id="replyPreviewUser" class="text-[10px] text-blue-400 font-bold block">@AHMET</span>
+                    <span id="replyPreviewText" class="text-xs text-slate-400 truncate max-w-xs block">Alıntılanan mesaj</span>
+                </div>
+                <button onclick="cancelReply()" class="text-slate-400 hover:text-white p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
             <!-- Sabit Mesaj Giriş Alanı -->
@@ -272,6 +293,8 @@
                             <button onclick="previewTheme('emerald')" class="p-2.5 bg-[#041c15] border border-emerald-500/20 rounded-xl text-xs font-semibold text-emerald-400 text-center hover:border-emerald-500 transition-colors">Zümrüt Ormanı</button>
                             <button onclick="previewTheme('monochrome')" class="p-2.5 bg-[#0e0f11] border border-slate-700 rounded-xl text-xs font-semibold text-slate-300 text-center hover:border-slate-500 transition-colors">Kömür Grisi</button>
                             <button onclick="previewTheme('purple')" class="p-2.5 bg-[#120924] border border-purple-500/20 rounded-xl text-xs font-semibold text-purple-400 text-center hover:border-purple-500 transition-colors">Asil Mor</button>
+                            <button onclick="previewTheme('sakura')" class="p-2.5 bg-[#1a080f] border border-rose-500/20 rounded-xl text-xs font-semibold text-rose-400 text-center hover:border-rose-500 transition-colors">Kiraz Pembesi</button>
+                            <button onclick="previewTheme('amber')" class="p-2.5 bg-[#170e03] border border-amber-500/20 rounded-xl text-xs font-semibold text-amber-400 text-center hover:border-amber-500 transition-colors">Kehribar Sarısı</button>
                         </div>
                     </div>
 
@@ -334,12 +357,14 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Hazır Tema Veritabanı
+        // Hazır Tema Veritabanı (2 Yeni Renk Eklendi)
         const themePresets = {
             sapphire: { bg: "#070b19", sidebar: "#090e1c", sender: "#2563eb", receiver: "#1e293b", primary: "#3b82f6", hover: "#2563eb" },
             emerald: { bg: "#041410", sidebar: "#061f19", sender: "#059669", receiver: "#112620", primary: "#10b981", hover: "#059669" },
             monochrome: { bg: "#0c0d0f", sidebar: "#13151a", sender: "#374151", receiver: "#1f2937", primary: "#4b5563", hover: "#374151" },
-            purple: { bg: "#0a0514", sidebar: "#110921", sender: "#7c3aed", receiver: "#1c1133", primary: "#8b5cf6", hover: "#7c3aed" }
+            purple: { bg: "#0a0514", sidebar: "#110921", sender: "#7c3aed", receiver: "#1c1133", primary: "#8b5cf6", hover: "#7c3aed" },
+            sakura: { bg: "#13050c", sidebar: "#1f0914", sender: "#db2777", receiver: "#2e121d", primary: "#f43f5e", hover: "#db2777" },
+            amber: { bg: "#0d0a02", sidebar: "#170f05", sender: "#d97706", receiver: "#291a0a", primary: "#f59e0b", hover: "#d97706" }
         };
 
         // Durum Değişkenleri
@@ -352,64 +377,44 @@
         let currentMobileView = 'list'; 
         let selectedPreviewTheme = "sapphire";
 
-        // Biyometri Dönüştürücüler
-        function bufferToBase64(buffer) {
-            let binary = '';
-            let bytes = new Uint8Array(buffer);
-            for (let i = 0; i < bytes.byteLength; i++) {
-                binary += String.fromCharCode(bytes[i]);
-            }
-            return window.btoa(binary);
-        }
-
-        function base64ToBuffer(base64) {
-            let binary = window.atob(base64);
-            let bytes = new Uint8Array(binary.length);
-            for (let i = 0; i < binary.length; i++) {
-                bytes[i] = binary.charCodeAt(i);
-            }
-            return bytes.buffer;
-        }
+        // Yanıt Verme (Reply) Durum Değişkenleri
+        let replyingToMsgId = null;
+        let replyingToSender = null;
+        let replyingToText = null;
 
         // Sayfa Yüklendiğinde "Beni Hatırla" Kontrolü ve Çevrimdışı Sinyali
         window.addEventListener("DOMContentLoaded", () => {
             const rememberedUser = localStorage.getItem("remembered_user");
             if (rememberedUser) {
-                // Şifre kutularını gizle ve otomatik giriş moduna sok
                 document.getElementById("loginFormFields").classList.add("hidden");
                 document.getElementById("loginSubtitle").classList.add("hidden");
                 
                 const container = document.getElementById("autoLoginContainer");
                 const msg = document.getElementById("autoLoginMsg");
                 container.classList.remove("hidden");
-                msg.innerText = `@${rememberedUser} adlı hesaba giriş yapılıyor...`;
+                msg.innerText = `@${rememberedUser.toUpperCase()} adlı hesaba giriş yapılıyor...`;
 
-                // 1 Saniye sonra biyometriyi tetikle
                 setTimeout(() => {
                     autoBiometricLogin(rememberedUser);
                 }, 1000);
             }
         });
 
-        // Çıkış yapmadan sekme kapatıldığında otomatik "çevrimdışı" yapma
-        window.addEventListener("beforeunload", () => {
-            if (currentUser) {
-                db.collection("users").doc(currentUser).update({
-                    status: "offline",
-                    lastActive: Date.now()
-                });
-            }
+        // HIZLI VE KARARLI DURUM TAKİBİ (pagehide & visibilitychange birlikte çalışır)
+        function setOnlineOffline(status) {
+            if (!currentUser) return;
+            db.collection("users").doc(currentUser).update({
+                status: status,
+                lastActive: Date.now()
+            });
+        }
+
+        document.addEventListener("visibilitychange", () => {
+            setOnlineOffline(document.visibilityState === "visible" ? "online" : "offline");
         });
 
-        // Sekme arka plana alındığında da çevrimdışı yapalım (Garantiye almak için)
-        document.addEventListener("visibilitychange", () => {
-            if (currentUser) {
-                const status = document.visibilityState === "visible" ? "online" : "offline";
-                db.collection("users").doc(currentUser).update({
-                    status: status,
-                    lastActive: Date.now()
-                });
-            }
+        window.addEventListener("pagehide", () => {
+            setOnlineOffline("offline");
         });
 
         // Göz İşareti ile Şifre Göster/Gizle
@@ -418,10 +423,10 @@
             const icon = document.getElementById("eyeIcon");
             if (input.type === "password") {
                 input.type = "text";
-                icon.className = "fa-solid fa-eye-slash";
+                icon.className = "fa-solid fa-eye-slash text-sm";
             } else {
                 input.type = "password";
-                icon.className = "fa-solid fa-eye";
+                icon.className = "fa-solid fa-eye text-sm";
             }
         }
 
@@ -476,12 +481,12 @@
             let hasValidationFail = false;
 
             if (!username) {
-                usernameError.innerText = "Bu kısmın doldurulması elzemdir.";
+                usernameError.innerText = "Bu kısmın doldulterilmesi elzemdir.";
                 usernameError.classList.remove("hidden");
                 hasValidationFail = true;
             }
             if (!pin) {
-                pinError.innerText = "Bu kısmın doldurulması elzemdir.";
+                pinError.innerText = "Bu kısmın doldulterilmesi elzemdir.";
                 pinError.classList.remove("hidden");
                 hasValidationFail = true;
             }
@@ -497,7 +502,6 @@
                     if (userData.pin === pin) {
                         const credentials = userData.credentials || [];
                         
-                        // Beni hatırla seçilmişse kaydet
                         const rememberMe = document.getElementById("rememberMeCheckbox").checked;
                         if (rememberMe) {
                             localStorage.setItem("remembered_user", username);
@@ -607,7 +611,6 @@
                 document.getElementById("lockScreen").classList.add("hidden");
             }
 
-            // Görünen isim yerine artık doğrudan benzersiz "Kullanıcı Adı" basılır
             document.getElementById("myDisplayName").innerText = `@${username.toUpperCase()}`;
             document.getElementById("myAvatar").innerText = username.substring(0, 2).toUpperCase();
             
@@ -615,7 +618,6 @@
                 status: "online"
             });
 
-            // Buluttaki Temayı Çekip Uygula
             const userTheme = userData.theme || "sapphire";
             const userBg = userData.chatBackground || null;
             applyThemeColors(userTheme);
@@ -775,7 +777,6 @@
             let oldUsername = currentUser;
 
             if (newUsernameInput && newUsernameInput !== currentUser) {
-                // 1. Yeni kullanıcı adı veritabanında var mı sorgula
                 const checkDoc = await db.collection("users").doc(newUsernameInput).get();
                 if (checkDoc.exists) {
                     errEl.innerText = "Bu kullanıcı adı zaten kullanılmaktadır.";
@@ -793,13 +794,11 @@
                 updates.pin = pinInput;
             }
 
-            // Temayı ve Arka Planı Buluta Ekle
             updates.theme = selectedPreviewTheme;
             updates.chatBackground = themePresets[selectedPreviewTheme].bg;
 
             try {
                 if (isUsernameChanged) {
-                    // Kullanıcıyı yeni isme taşı (Geçmiş isim listesiyle)
                     const oldUserDoc = await db.collection("users").doc(currentUser).get();
                     const oldUserData = oldUserDoc.data();
 
@@ -810,7 +809,6 @@
                         oldUsernames: firebase.firestore.FieldValue.arrayUnion(currentUser)
                     };
 
-                    // Yeni ismi kaydet, eskisini sil
                     await db.collection("users").doc(newUsernameInput).set(newUserData);
                     await db.collection("users").doc(currentUser).delete();
 
@@ -822,7 +820,6 @@
                     document.getElementById("myDisplayName").innerText = `@${newUsernameInput.toUpperCase()}`;
                     document.getElementById("myAvatar").innerText = newUsernameInput.substring(0, 2).toUpperCase();
                 } else {
-                    // Kullanıcı adı değişmediyse sadece diğer alanları güncelle
                     await db.collection("users").doc(currentUser).update(updates);
                 }
 
@@ -861,7 +858,6 @@
             document.getElementById("chatActionsMenu").classList.toggle("hidden");
         }
 
-        // KİŞİYE ÖZEL SOHBET TEMİZLEME (SİLME) MANTALIĞI (Yalnızca 1. kullanıcıda temizlenir)
         async function deleteChatForMe() {
             if (!activeChatId || !currentUser) return;
             const confirmDelete = confirm("Bu sohbet geçmişini kendiniz için temizlemek istediğinize emin misiniz? Karşı tarafın mesaj geçmişi korunacaktır.");
@@ -874,7 +870,6 @@
                         [`hiddenBy.${currentUser}`]: true
                     });
                     
-                    // Menüyü kapat, sohbette çık, listeyi güncelle
                     document.getElementById("chatActionsMenu").classList.add("hidden");
                     goBackToList();
                 } catch (err) {
@@ -919,7 +914,7 @@
 
         window.addEventListener("resize", updateMobileLayout);
 
-        // Yeni Sohbet Başlatma
+        // Yeni Sohbet Odası Başlatma
         async function startNewChat() {
             const targetUser = document.getElementById("searchUserField").value.trim().toLowerCase();
             if (!targetUser || targetUser === currentUser) return;
@@ -951,7 +946,6 @@
                         hiddenBy: { [currentUser]: false, [targetUser]: false }
                     });
                 } else {
-                    // Eğer sohbet daha önce silindiyse tekrar görünür yapalım
                     await chatRef.update({
                         [`hiddenBy.${currentUser}`]: false
                     });
@@ -964,7 +958,6 @@
             }
         }
 
-        // Sohbet Odasını Seçme ve Okunmamışları Sıfırlama
         async function selectChatRoom(chatId, targetUserDoc) {
             activeChatId = chatId;
             otherUser = targetUserDoc;
@@ -974,10 +967,9 @@
 
             await db.collection("chats").doc(chatId).update({
                 [`unreadCounts.${currentUser}`]: 0,
-                [`hiddenBy.${currentUser}`]: false // Giriş yapıldığında odayı görünür kıl
+                [`hiddenBy.${currentUser}`]: false 
             });
 
-            // Başlık alanını hedef kullanıcının verileriyle güncelle
             const otherUserSnap = await db.collection("users").doc(targetUserDoc).get();
             const otherUserData = otherUserSnap.data() || {};
             const otherDisplayName = otherUserData.displayName || targetUserDoc.toUpperCase();
@@ -985,22 +977,66 @@
             document.getElementById("activeChatName").innerText = `@${targetUserDoc.toUpperCase()}`;
             document.getElementById("activeAvatar").innerText = targetUserDoc.substring(0, 2).toUpperCase();
 
+            cancelReply(); // Odayı değiştirince açık yanıtı kapat
+
             listenOtherUserStatus();
             listenMessages();
+        }
+
+        // --- YANIT VERME (REPLY) MEKANİZMASI ---
+        function triggerReply(msgId, sender, text) {
+            replyingToMsgId = msgId;
+            replyingToSender = sender;
+            replyingToText = text;
+
+            const previewBar = document.getElementById("replyPreviewBar");
+            const previewUser = document.getElementById("replyPreviewUser");
+            const previewText = document.getElementById("replyPreviewText");
+
+            previewUser.innerText = `@${sender.toUpperCase()}`;
+            previewText.innerText = text;
+            previewBar.classList.remove("hidden");
+
+            // Yanıt verirken klavye açılmasın veya mevcut durumu bozmasın diye odağı girdide tut
+            document.getElementById("messageInput").focus();
+        }
+
+        function cancelReply() {
+            replyingToMsgId = null;
+            replyingToSender = null;
+            replyingToText = null;
+            document.getElementById("replyPreviewBar").classList.add("hidden");
+        }
+
+        // Alıntılanan Orijinal Mesaja Yumuşak Kaydırma (Scroll To Message)
+        function scrollToMessage(msgId) {
+            // Eğer mobildeyse alıntı kutusuna tıklayınca klavyeyi kapat
+            if (window.innerWidth < 768) {
+                document.getElementById("messageInput").blur();
+            }
+
+            const element = document.getElementById(`msg_${msgId}`);
+            if (element) {
+                element.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                
+                // Başarılı ulaştığında parlayarak kendini belli etsin
+                element.classList.add("highlight-message");
+                setTimeout(() => {
+                    element.classList.remove("highlight-message");
+                }, 1500);
+            }
         }
 
         // Mesajları Dinleme (Optimizasyon için Limit 50)
         async function listenMessages() {
             if (unsubMessages) unsubMessages();
 
-            // Sohbetin silinme/temizlenme zaman damgası bilgisine bakalım
             const chatSnap = await db.collection("chats").doc(activeChatId).get();
             const chatData = chatSnap.data() || {};
             const clearTime = (chatData.clearTimestamps && chatData.clearTimestamps[currentUser]) || 0;
 
             const messagesRef = db.collection("chats").doc(activeChatId).collection("messages");
             
-            // VERİTABANI YORMAMAK ADINA EN SON 50 MESAJ LIMITI
             unsubMessages = messagesRef.orderBy("timestamp", "desc").limit(50).onSnapshot((snapshot) => {
                 const container = document.getElementById("messageContainer");
                 container.innerHTML = "";
@@ -1011,11 +1047,8 @@
 
                 snapshot.forEach((doc) => {
                     const msg = doc.data();
-                    
-                    // Silinme zaman damgasından daha eski olan mesajları bu kullanıcıya GÖSTERME (Erişim Engeli)
                     if (msg.timestamp <= clearTime) return;
-
-                    msgsArray.unshift({ id: doc.id, ref: doc.ref, ...msg }); // Eski mesaj en üstte görünecek şekilde sırala
+                    msgsArray.unshift({ id: doc.id, ref: doc.ref, ...msg });
                 });
 
                 msgsArray.forEach((msg) => {
@@ -1041,9 +1074,26 @@
 
                     const timeStr = formatTime(msg.timestamp);
 
+                    // Alıntı (Reply) İçeriği Varsa Balonun Üstüne Çiz
+                    let replyBlockHtml = "";
+                    if (msg.replyToId) {
+                        // JavaScript tırnak hatalarını önlemek için güvenli metin ataması
+                        const escapedText = msg.replyToText.replace(/'/g, "\\'");
+                        replyBlockHtml = `
+                            <div onclick="scrollToMessage('${msg.replyToId}')" class="bg-black/20 p-2 rounded-xl text-left text-[11px] mb-2 cursor-pointer border-l-2 border-blue-400 opacity-80 hover:opacity-100 transition-opacity max-w-full">
+                                <span class="font-bold block text-[9px] text-blue-300">@${msg.replyToSender.toUpperCase()}</span>
+                                <span class="truncate block text-slate-300">${msg.replyToText}</span>
+                            </div>
+                        `;
+                    }
+
+                    const cleanMsgText = msg.text.replace(/'/g, "\\'");
+
+                    // ÇİFT TIKLAMA (ondblclick) İLE YANIT VERMEYİ TETİKLEME
                     const msgHtml = `
-                        <div class="flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'items-start'}">
-                            <div class="message-content px-4 py-2.5 rounded-2xl ${roundedStyle} shadow-lg border border-white/5" style="${bgStyle}">
+                        <div id="msg_${msg.id}" class="flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'items-start'} transition-all duration-300 rounded-2xl">
+                            <div ondblclick="triggerReply('${msg.id}', '${msg.sender}', '${cleanMsgText}')" class="message-content px-3.5 py-2 rounded-2xl ${roundedStyle} shadow-lg border border-white/5 cursor-pointer transition-all" style="${bgStyle}">
+                                ${replyBlockHtml}
                                 <p class="text-[13px] leading-relaxed whitespace-pre-line">${msg.text}</p>
                                 <div class="flex items-center justify-end gap-1 mt-1 text-[8px] ${isMe ? 'text-blue-200' : 'text-slate-400'}">
                                     <span>${timeStr}</span>
@@ -1062,7 +1112,6 @@
                     });
                 }
 
-                // Scroll otomatik en alta kaydırılır
                 setTimeout(() => {
                     document.getElementById("chatBackground").scrollTop = document.getElementById("chatBackground").scrollHeight;
                 }, 50);
@@ -1100,7 +1149,6 @@
                     statusEl.innerText = "Yazıyor...";
                     statusEl.className = "text-[10px] text-sky-400 animate-pulse font-semibold";
                 } else {
-                    // Gerçek zamanlı online/offline ve son görülme bilgisini veritabanından çekme
                     const otherDoc = await db.collection("users").doc(otherUser).get();
                     if (otherDoc.exists) {
                         const otherData = otherDoc.data();
@@ -1124,13 +1172,28 @@
             const now = Date.now();
 
             try {
-                await db.collection("chats").doc(activeChatId).collection("messages").add({
+                // Alıntı verilerini hazırlıyoruz
+                const msgPayload = {
                     sender: currentUser,
                     text: text,
                     timestamp: now,
                     status: "sent"
-                });
+                };
 
+                // Eğer yanıt verme modundaysak verileri payload'a ekle
+                if (replyingToMsgId) {
+                    msgPayload.replyToId = replyingToMsgId;
+                    msgPayload.replyToSender = replyingToSender;
+                    msgPayload.replyToText = replyingToText;
+                }
+
+                // 1. Mesajı Firestore'a yaz
+                const newDocRef = await db.collection("chats").doc(activeChatId).collection("messages").add(msgPayload);
+                
+                // Mesaj belgesine kendi kimlik id'sini de yazalım (Scroll hedefi yapabilmek için)
+                await newDocRef.update({ id: newDocRef.id });
+
+                // 2. Ana Chat Bilgisini Güncelle
                 await db.collection("chats").doc(activeChatId).update({
                     lastMessageTime: now,
                     lastMessageText: text,
@@ -1138,12 +1201,13 @@
                     lastMessageStatus: "sent",
                     [`typing.${currentUser}`]: false,
                     [`unreadCounts.${otherUser}`]: firebase.firestore.FieldValue.increment(1),
-                    [`hiddenBy.${otherUser}`]: false // Karşı taraf sildiyse mesaj gidince onda tekrar odanın açılmasını sağla
+                    [`hiddenBy.${otherUser}`]: false
                 });
 
                 input.value = "";
+                cancelReply(); // Yanıt kutusunu kapat
                 
-                // MOBİLLERDE GÖNDERME SONRASI KLAVYENİN KAPANMASINI (FOCUS KAYBINI) ENGELLEME
+                // KLAVYENİN KAPANMASINI ENGELLEMEK İÇİN FOCUS SABİTLİĞİ
                 input.focus();
             } catch (err) {
                 console.error(err);
@@ -1170,7 +1234,7 @@
             }, 2000);
         });
 
-        // Sohbet Listesini Yükleme (Son mesaja göre sıralama ve temizlenen sohbetleri gizleme)
+        // Sohbet Listesini Yükleme
         function loadActiveChatsList() {
             db.collection("chats").orderBy("lastMessageTime", "desc").onSnapshot((snapshot) => {
                 const listContainer = document.getElementById("chatList");
@@ -1181,7 +1245,6 @@
                     const chat = doc.data();
                     if (chat.users.includes(currentUser)) {
                         
-                        // EĞER KULLANICI SOHBETİ SİLDİYSE LİSTEDE GÖSTERME (KİŞİSEL GİZLEME)
                         const isHiddenForMe = chat.hiddenBy && chat.hiddenBy[currentUser];
                         if (isHiddenForMe) return;
 
@@ -1301,7 +1364,6 @@
             document.getElementById("activeChatContainer").classList.add("hidden");
             document.getElementById("welcomeScreen").classList.remove("hidden");
             
-            // Otomatik giriş alanı temizlensin
             document.getElementById("loginFormFields").classList.remove("hidden");
             document.getElementById("loginSubtitle").classList.remove("hidden");
             document.getElementById("autoLoginContainer").classList.add("hidden");
@@ -1331,6 +1393,9 @@
         window.togglePinVisibility = togglePinVisibility;
         window.toggleChatActionsMenu = toggleChatActionsMenu;
         window.deleteChatForMe = deleteChatForMe;
+        window.triggerReply = triggerReply;
+        window.cancelReply = cancelReply;
+        window.scrollToMessage = scrollToMessage;
 
         window.openWallpaperModal = () => document.getElementById("wallpaperModal").classList.remove("hidden");
         window.closeWallpaperModal = () => document.getElementById("wallpaperModal").classList.add("hidden");
