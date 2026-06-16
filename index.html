@@ -12,7 +12,7 @@
     <!-- YEREL DOSYALARDA ENGELSİZ ÇALIŞAN KLASİK FIREBASE SDK KÜTÜPHANELERİ -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
- 
+
     <style>
         html, body {
             height: 100dvh;
@@ -74,6 +74,7 @@
             </div>
             <h3 class="text-lg font-bold text-white tracking-tight" id="autoLoginText">Hesaba otomatik giriş yapılıyor...</h3>
             <p class="text-xs text-slate-500">Lütfen cihazınızın parmak izi okuyucusunu kullanın.</p>
+            <p id="autoLoginErrorDetail" class="text-red-400 text-[11px] max-w-xs mx-auto hidden"></p>
             <button onclick="cancelAutoLogin()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs px-4 py-2 rounded-xl transition-colors">Vazgeç / PIN ile Gir</button>
         </div>
     </div>
@@ -111,7 +112,7 @@
                     <label for="rememberMeCheckbox" class="text-xs text-slate-400 cursor-pointer select-none">Beni Unutma (Otomatik Parmak İzi Girişi)</label>
                 </div>
 
-                <p id="generalLoginError" class="text-red-400 text-xs text-center font-medium hidden"></p>
+                <p id="generalLoginError" class="text-red-400 text-xs text-center font-medium hidden leading-relaxed"></p>
                 
                 <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/20">
                     Giriş Yap
@@ -130,6 +131,7 @@
             <p class="text-slate-400 text-xs mb-6 leading-relaxed">
                 Hesabınız onaylandı! Güvenliğiniz için **ilk girişte parmak izinizi kaydetmeniz zorunludur.** Şifreniz çalınsa dahi parmağınız olmadan kimse bu hesaba giremez.
             </p>
+            <p id="mandatoryRegisterError" class="text-red-400 text-xs mb-4 hidden leading-relaxed"></p>
             <button onclick="registerMandatoryBiometric()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
                 <i class="fa-solid fa-key"></i> Parmak İzimi Şimdi Tanımla
             </button>
@@ -405,9 +407,19 @@
         async function triggerAutoLogin(username) {
             const autoLoginScreen = document.getElementById("autoLoginScreen");
             const autoLoginText = document.getElementById("autoLoginText");
+            const errorDetail = document.getElementById("autoLoginErrorDetail");
 
             autoLoginText.innerText = `@${username} hesabına otomatik giriş yapılıyor...`;
             autoLoginScreen.classList.remove("hidden");
+            errorDetail.classList.add("hidden");
+
+            // Güvenli ortam (HTTPS/localhost) kontrolü
+            if (window.location.protocol !== "https:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+                errorDetail.innerText = "Biyometrik doğrulama tarayıcı kısıtlamaları nedeniyle yerel dosyalarda (file://) çalışmaz. Lütfen HTTPS veya yerel sunucu (Live Server) kullanın.";
+                errorDetail.classList.remove("hidden");
+                setTimeout(cancelAutoLogin, 4000);
+                return;
+            }
 
             try {
                 const userDoc = await db.collection("users").doc(username).get();
@@ -421,7 +433,9 @@
                             autoLoginScreen.classList.add("hidden");
                             successfulLogin(username, userData);
                         } else {
-                            cancelAutoLogin();
+                            errorDetail.innerText = "Biyometrik doğrulama cihazınız tarafından reddedildi veya iptal edildi.";
+                            errorDetail.classList.remove("hidden");
+                            setTimeout(cancelAutoLogin, 2500);
                         }
                     } else {
                         cancelAutoLogin();
@@ -431,7 +445,9 @@
                 }
             } catch (err) {
                 console.error(err);
-                cancelAutoLogin();
+                errorDetail.innerText = "Sistem Hatası: " + err.message;
+                errorDetail.classList.remove("hidden");
+                setTimeout(cancelAutoLogin, 3000);
             }
         }
 
@@ -542,11 +558,19 @@
                         
                         if (credentials.length > 0) {
                             // HESAPTA PARMAK İZİ TANIMLI: DOĞRUDAN biyometriyi aç!
+                            
+                            // Güvenli Ortam Denetimi
+                            if (window.location.protocol !== "https:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+                                generalError.innerHTML = "<strong>Güvenlik Sınırı:</strong> Parmak izi girişi tarayıcı kuralları gereği yerel dosyalarda (file://) çalışmaz. Sitenizi test etmek için lütfen Live Server kullanın veya GitHub Pages'e yükleyin.";
+                                generalError.classList.remove("hidden");
+                                return;
+                            }
+
                             const authSuccess = await verifyBiometricLogin(username, credentials);
                             if (authSuccess) {
                                 successfulLogin(username, userData);
                             } else {
-                                generalError.innerText = "Biyometrik doğrulama tamamlanamadı.";
+                                generalError.innerText = "Biyometrik doğrulama tamamlanamadı veya iptal edildi.";
                                 generalError.classList.remove("hidden");
                             }
                         } else {
@@ -574,8 +598,6 @@
 
         async function verifyBiometricLogin(username, credentials) {
             if (!window.PublicKeyCredential) {
-                document.getElementById("generalLoginError").innerText = "Cihazınız parmak izi okumayı desteklemiyor.";
-                document.getElementById("generalLoginError").classList.remove("hidden");
                 return false;
             }
             try {
@@ -590,7 +612,7 @@
                 const publicKeyCredentialRequestOptions = {
                     challenge: randomChallenge,
                     allowCredentials: allowCredentials,
-                    userVerification: "required",
+                    userVerification: "preferred", // 'required' yerine cihaz uyumluluğu yüksek olan 'preferred' kullanıyoruz
                     timeout: 60000
                 };
 
@@ -678,15 +700,20 @@
 
         // --- İLK GİRİŞTE ZORUNLU PARMAK İZİ TANIMLAMA MANTIĞI ---
         async function registerMandatoryBiometric() {
+            const registerError = document.getElementById("mandatoryRegisterError");
+            registerError.classList.add("hidden");
+
             if (!currentUser) return;
 
             if (!window.PublicKeyCredential) {
-                alert("Tarayıcınız veya cihazınız biyometrik kaydı desteklemiyor.");
+                registerError.innerText = "Cihazınız parmak izi tanımayı desteklemiyor. Lütfen PIN ile giriş yapmaya devam edin.";
+                registerError.classList.remove("hidden");
                 return;
             }
 
             if (window.location.protocol !== "https:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-                alert("Tarayıcı güvenliği nedeniyle parmak izi tanımlaması sadece HTTPS veya localhost üzerinde çalışır.");
+                registerError.innerHTML = "<strong>Tarayıcı Sınırı:</strong> Parmak izi tanımı tarayıcı güvenlik kuralları gereği yerel dosyalarda (file://) çalışmaz. Sitenizi test etmek için lütfen Live Server kullanın veya GitHub Pages'e yükleyin.";
+                registerError.classList.remove("hidden");
                 return;
             }
 
@@ -713,7 +740,7 @@
                 ],
                 authenticatorSelection: {
                     authenticatorAttachment: "platform",
-                    userVerification: "required"
+                    userVerification: "preferred" // Uyum oranını yükseltmek için 'preferred' yaptık
                 },
                 timeout: 60000,
                 attestation: "none"
@@ -736,12 +763,20 @@
                 document.getElementById("lockScreen").classList.add("hidden");
             } catch (err) {
                 console.error(err);
+                registerError.innerText = "Biyometrik doğrulama cihaz tarafından reddedildi veya yarıda kesildi: " + err.message;
+                registerError.classList.remove("hidden");
             }
         }
 
         // Parmak İzi Kaydetme (Ayarlar Menüsünden)
         async function registerBiometric() {
             if (!currentUser) return;
+
+            if (window.location.protocol !== "https:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
+                alert("Parmak izi kaydı tarayıcı güvenlik kuralları nedeniyle yerel dosyalarda (file://) çalışmaz.");
+                return;
+            }
+
             try {
                 const randomChallenge = new Uint8Array(32);
                 window.crypto.getRandomValues(randomChallenge);
@@ -754,7 +789,7 @@
                     rp: { name: "BlueChat", ...(rpId ? { id: rpId } : {}) },
                     user: { id: userId, name: `${currentUser}@bluechat.com`, displayName: currentUser.toUpperCase() },
                     pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
-                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "preferred" },
                     timeout: 60000,
                     attestation: "none"
                 };
@@ -771,7 +806,7 @@
                 alert("Yeni parmak izi tanımlandı!");
             } catch (err) {
                 console.error(err);
-                alert("Parmak izi tanımlanamadı.");
+                alert("Parmak izi tanımlanamadı: " + err.message);
             }
         }
 
@@ -1240,7 +1275,7 @@
 
                         const chatHtml = `
                             <div id="item_${chat.chatId}" class="flex items-center gap-3 p-4 border-b border-slate-900/30 cursor-pointer transition-all ${itemBg}">
-                                <div class="w-11 h-11 theme-btn text-white font-bold rounded-2xl flex items-center justify-center text-sm shadow">
+                                <div class="w-11 h-11 theme-btn text-white font-bold rounded-2xl flex items-center justify-center text-sm shadow animate-fade-in">
                                     ${partner.substring(0,2).toUpperCase()}
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -1267,7 +1302,7 @@
 
                 if (!hasChat) {
                     listContainer.innerHTML = `
-                        <div class="flex flex-col items-center justify-center text-center p-8 mt-12 space-y-3">
+                        <div class="flex flex-col items-center justify-center text-center p-8 mt-12 space-y-3 animate-fade-in">
                             <div class="w-14 h-14 bg-blue-500/5 text-blue-500/40 rounded-2xl flex items-center justify-center text-xl">
                                 <i class="fa-solid fa-ghost"></i>
                             </div>
@@ -1293,18 +1328,26 @@
             }
         }
 
-        function changeBgColor(hexColor) {
+        async function changeBgColor(hexColor) {
             const bg = document.getElementById("chatBackground");
             bg.style.backgroundImage = "none";
             bg.style.backgroundColor = hexColor;
             localStorage.setItem("chat_background", hexColor);
+
+            if (currentUser) {
+                await db.collection("users").doc(currentUser).update({ chatBackground: hexColor });
+            }
             closeWallpaperModal();
         }
 
-        function changeBgImage(url) {
+        async function changeBgImage(url) {
             const bg = document.getElementById("chatBackground");
             bg.style.backgroundImage = `url('${url}')`;
             localStorage.setItem("chat_background", url);
+
+            if (currentUser) {
+                await db.collection("users").doc(currentUser).update({ chatBackground: url });
+            }
             closeWallpaperModal();
         }
 
