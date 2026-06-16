@@ -348,22 +348,30 @@
         </div>
     </div>
 
-    <!-- SCRIPT ALANI -->
+    <!-- SCRIPT ALANI (Biyometri Yardımcıları En Tepeye Taşındı) -->
     <script>
-        // Firebase Konfigürasyonu
-        const firebaseConfig = {
-            apiKey: "AIzaSyBH-8I085mtVbbsh4ct8_GdwU-TXgSxdAM",
-            authDomain: "alternativewp-92776.firebaseapp.com",
-            projectId: "alternativewp-92776",
-            storageBucket: "alternativewp-92776.firebasestorage.app",
-            messagingSenderId: "168062034734",
-            appId: "1:168062034734:web:5375891295116529f10bf",
-            measurementId: "G-HMQJRV4KW5"
-        };
+        // --- BİYOMETRİ DÖNÜŞÜM YARDIMCILARI (EN TEPEDE - HOISTING GÜVENCESİYLE) ---
+        function bufferToBase64(buffer) {
+            let binary = '';
+            let bytes = new Uint8Array(buffer);
+            for (let i = 0; i < bytes.byteLength; i++) {
+                binary += String.fromCharCode(bytes[i]);
+            }
+            return window.btoa(binary);
+        }
 
-        firebase.initializeApp(firebaseConfig);
-        const db = firebase.firestore();
+        function base64ToBuffer(base64) {
+            let binary = window.atob(base64);
+            let bytes = new Uint8Array(binary.length);
+            for (let i = 0; i < binary.length; i++) {
+                bytes[i] = binary.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+    </script>
 
+    <script>
+        // Ana Uygulama Mantığı
         const themePresets = {
             sapphire: { bg: "#070b19", sidebar: "#090e1c", sender: "#2563eb", receiver: "#1e293b", primary: "#3b82f6", hover: "#2563eb" },
             emerald: { bg: "#041410", sidebar: "#061f19", sender: "#059669", receiver: "#112620", primary: "#10b981", hover: "#059669" },
@@ -399,7 +407,6 @@
         window.addEventListener("DOMContentLoaded", () => {
             const rememberedUser = localStorage.getItem("remembered_user");
             if (rememberedUser) {
-                // Otomatik parmak izi penceresini tetikle
                 triggerAutoLogin(rememberedUser);
             }
         });
@@ -466,7 +473,6 @@
             }
         }
 
-        // Sekme arka plana geçtiğinde / kapandığında tetiklenir
         document.addEventListener("visibilitychange", () => {
             if (document.visibilityState === "hidden") {
                 setUserStatus("offline");
@@ -479,7 +485,6 @@
             setUserStatus("offline");
         });
 
-        // Son görülme tarihini dinamik olarak biçimlendir
         function formatLastSeen(lastSeenTimestamp, status) {
             if (status === "online") return "Çevrimiçi";
             if (!lastSeenTimestamp) return "Çevrimdışı";
@@ -547,7 +552,6 @@
                     if (userData.pin === pin) {
                         const credentials = userData.credentials || [];
 
-                        // "Beni Unutma" seçilmişse hafızaya kaydet
                         if (rememberMe && credentials.length > 0) {
                             localStorage.setItem("remembered_user", username);
                         } else {
@@ -557,7 +561,6 @@
                         if (credentials.length > 0) {
                             // HESAPTA PARMAK İZİ TANIMLI: DOĞRUDAN biyometriyi aç!
                             
-                            // Güvenli Ortam Denetimi
                             if (window.location.protocol !== "https:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
                                 generalError.innerHTML = "<strong>Güvenlik Sınırı:</strong> Parmak izi girişi tarayıcı kuralları gereği yerel dosyalarda (file://) çalışmaz. Sitenizi test etmek için lütfen Live Server kullanın veya GitHub Pages'e yükleyin.";
                                 generalError.classList.remove("hidden");
@@ -567,8 +570,6 @@
                             const authSuccess = await verifyBiometricLogin(username, credentials);
                             if (authSuccess) {
                                 successfulLogin(username, userData);
-                            } else {
-                                // Hata mesajı zaten verifyBiometricLogin içinde detaylandırılıp ekrana basıldı
                             }
                         } else {
                             successfulLogin(username, userData);
@@ -609,7 +610,7 @@
                 const publicKeyCredentialRequestOptions = {
                     challenge: randomChallenge,
                     allowCredentials: allowCredentials,
-                    userVerification: "preferred", // 'required' yerine cihaz uyumluluğu yüksek olan 'preferred' kullanıyoruz
+                    userVerification: "preferred",
                     timeout: 60000
                 };
 
@@ -621,7 +622,6 @@
             } catch (err) {
                 console.error("Biyometrik doğrulama hatası: ", err);
 
-                // HATA TEŞHİS MOTORU: Hatanın türüne göre kullanıcıya net yönlendirme yapar
                 let friendlyError = "Biyometrik doğrulama tamamlanamadı.";
                 
                 if (err.name === "NotAllowedError") {
@@ -683,7 +683,6 @@
                 document.getElementById("lockScreen").classList.add("hidden");
             }
 
-            // Görünen ismi bas
             const displayName = userData.displayName || username.toUpperCase();
             document.getElementById("myDisplayName").innerText = displayName;
             document.getElementById("myAvatar").innerText = displayName.substring(0, 2).toUpperCase();
@@ -692,7 +691,6 @@
                 status: "online"
             });
 
-            // KULLANICIYA TANIMLI TEMAYI VERİTABANINDAN ÇEKİP UYGULAMA
             const userTheme = userData.theme || "sapphire";
             const userBg = userData.chatBackground || null;
             applyThemeColors(userTheme);
@@ -754,7 +752,7 @@
                 ],
                 authenticatorSelection: {
                     authenticatorAttachment: "platform",
-                    userVerification: "preferred" // Uyum oranını yükseltmek için 'preferred' yaptık
+                    userVerification: "preferred"
                 },
                 timeout: 60000,
                 attestation: "none"
@@ -850,7 +848,6 @@
             document.documentElement.style.setProperty('--theme-primary-hover', theme.hover);
         }
 
-        // İSİM DEĞİŞTİRME & BULUT ENTEGRASYONU (Sohbetler Silinmez)
         async function saveAdvancedSettings() {
             if (!currentUser) return;
 
@@ -866,9 +863,7 @@
 
             let targetUsername = currentUser;
 
-            // Eğer kullanıcı adını değiştirmek istiyorsa
             if (newUsernameInput && newUsernameInput !== currentUser) {
-                // 1. Yeni isim sistemde var mı kontrol et
                 const checkDoc = await db.collection("users").doc(newUsernameInput).get();
                 if (checkDoc.exists) {
                     nameError.innerText = "Bu kullanıcı adı zaten alınmış!";
@@ -876,11 +871,10 @@
                     return;
                 }
 
-                // 2. Yeni kullanıcı adı dökümanını oluştur ve eskileri kopyala
                 const newUserData = {
                     ...userData,
                     username: newUsernameInput,
-                    oldUsername: currentUser // Eskiyi geleceğe dönük buraya kaydediyoruz
+                    oldUsername: currentUser 
                 };
                 
                 if (pinInput) newUserData.pin = pinInput;
@@ -889,7 +883,6 @@
 
                 await db.collection("users").doc(newUsernameInput).set(newUserData);
 
-                // 3. Aktif sohbet odalarında eski kullanıcı adını yenisiyle güncelle (Sohbetler gitmez)
                 const chatsQuery = await db.collection("chats").where("users", "array-contains", currentUser).get();
                 const batch = db.batch();
 
@@ -909,7 +902,6 @@
                         delete typing[currentUser];
                     }
 
-                    // Eğer sohbet daha önce silindiyse/gizlendiyse listesini de güncelle
                     let hiddenBy = chatData.hiddenBy || [];
                     if (hiddenBy.includes(currentUser)) {
                         hiddenBy = hiddenBy.map(u => u === currentUser ? newUsernameInput : u);
@@ -924,18 +916,14 @@
                 });
 
                 await batch.commit();
-
-                // 4. Eski dökümanı sil
                 await db.collection("users").doc(currentUser).delete();
 
-                // 5. Cihaz hafızasındaki otomatik girişi de güncelle
                 if (localStorage.getItem("remembered_user") === currentUser) {
                     localStorage.setItem("remembered_user", newUsernameInput);
                 }
 
                 targetUsername = newUsernameInput;
             } else {
-                // Sadece PIN veya tema değişiyorsa
                 const updates = {
                     theme: selectedPreviewTheme,
                     chatBackground: themePresets[selectedPreviewTheme].bg
@@ -950,7 +938,6 @@
                 await userRef.update(updates);
             }
 
-            // Temayı anlık uygula
             applyThemeColors(selectedPreviewTheme);
             const bg = document.getElementById("chatBackground");
             bg.style.backgroundImage = "none";
@@ -963,8 +950,7 @@
             closeSettingsModal();
         }
 
-        // --- TEK TARAFLI SOHBET SİLME / TEMİZLEME MANTIĞI ---
-        
+        // --- TEK TARAFLI SOHBET SİLME ---
         function toggleChatDropdown() {
             document.getElementById("chatDropdownMenu").classList.toggle("hidden");
         }
@@ -972,10 +958,8 @@
         async function clearChatHistory() {
             if (!activeChatId || !currentUser) return;
             
-            // Onay isteyelim
             if (confirm("Bu sohbeti temizlemek ve listenizden kaldırmak istediğinize emin misiniz? (Karşı taraf geçmişi görmeye devam edecektir)")) {
                 try {
-                    // Sohbeti benden gizle (hiddenBy listesine beni ekle)
                     await db.collection("chats").doc(activeChatId).update({
                         hiddenBy: firebase.firestore.FieldValue.arrayUnion(currentUser)
                     });
@@ -1047,10 +1031,9 @@
                         lastMessageSender: currentUser,
                         lastMessageStatus: "sent",
                         unreadCounts: { [currentUser]: 0, [targetUser]: 0 },
-                        hiddenBy: [] // Her iki taraf da görsün
+                        hiddenBy: [] 
                     });
                 } else {
-                    // Eğer sohbet daha önce gizlendiyse, benden gizlenmesini kaldır
                     await chatRef.update({
                         hiddenBy: firebase.firestore.FieldValue.arrayRemove(currentUser)
                     });
@@ -1066,7 +1049,7 @@
         async function selectChatRoom(chatId, targetUserDoc) {
             activeChatId = chatId;
             otherUser = targetUserDoc;
-            messageLimit = 50; // Yeni oda açıldığında limit sıfırlanır
+            messageLimit = 50; 
 
             currentMobileView = 'chat'; 
             updateMobileLayout();
@@ -1075,12 +1058,10 @@
                 [`unreadCounts.${currentUser}`]: 0
             });
 
-            // Gerçek zamanlı çevrimiçi / son görülme takipçisi
             listenOtherUserOnlineStatus(targetUserDoc);
             listenMessages();
         }
 
-        // Alıcı kullanıcının Çevrimiçi/Çevrimdışı ve Son Görülme durumunu gerçek zamanlı takip eder
         function listenOtherUserOnlineStatus(targetUserDoc) {
             if (unsubStatus) unsubStatus();
 
@@ -1092,7 +1073,6 @@
                 document.getElementById("activeChatName").innerText = otherDisplayName;
                 document.getElementById("activeAvatar").innerText = otherDisplayName.substring(0, 2).toUpperCase();
 
-                // Yazıyor kontrolü ve Son görülme metni
                 db.collection("chats").doc(activeChatId).get().then(chatSnap => {
                     const chatData = chatSnap.data() || {};
                     const isTyping = chatData.typing && chatData.typing[targetUserDoc];
@@ -1112,13 +1092,11 @@
             });
         }
 
-        // --- VERİTABANI DOSTU AKILLI SORGULAMA (50 MESAJ SINIRI + SCROLL UP TO LOAD) ---
         function listenMessages() {
             if (unsubMessages) unsubMessages();
 
             const messagesRef = db.collection("chats").doc(activeChatId).collection("messages");
             
-            // Limitli son 50 mesajı çeker (Sıralama azalan yapılır, bellek içinde ters çevrilerek listelenir)
             unsubMessages = messagesRef.orderBy("timestamp", "desc").limit(messageLimit).onSnapshot((snapshot) => {
                 const container = document.getElementById("messageContainer");
                 container.innerHTML = "";
@@ -1126,7 +1104,6 @@
                 const batch = db.batch();
                 let hasUpdates = false;
 
-                // Veritabanından gelen son mesajları tarihe göre doğru sıraya dizmek için ters çeviriyoruz
                 const docs = [];
                 snapshot.forEach(doc => docs.unshift({ id: doc.id, data: doc.data(), ref: doc.ref }));
 
@@ -1176,7 +1153,6 @@
                     });
                 }
 
-                // Otomatik en alta kaydır
                 setTimeout(() => {
                     const bg = document.getElementById("chatBackground");
                     bg.scrollTop = bg.scrollHeight;
@@ -1184,17 +1160,14 @@
             });
         }
 
-        // Otomatik Geçmiş Mesaj Yükleyici (Tavana Değince Limit 50 Artar)
         const chatBackgroundScroll = document.getElementById("chatBackground");
         chatBackgroundScroll.addEventListener("scroll", () => {
             if (chatBackgroundScroll.scrollTop === 0) {
-                // En tepeye kaydırıldıysa limiti 50 artırıp dinleyiciyi tekrar kuruyoruz
                 messageLimit += 50;
                 listenMessages();
             }
         });
 
-        // Mesaj Gönderme (Odaklanma Korunur, Klavye Kapanmaz)
         async function sendMessage() {
             const input = document.getElementById("messageInput");
             const text = input.value.trim();
@@ -1210,7 +1183,6 @@
                     status: "sent"
                 });
 
-                // Sohbet silindiyse iki tarafta da tekrar görünür yap (hiddenBy dizisini temizle)
                 await db.collection("chats").doc(activeChatId).update({
                     lastMessageTime: now,
                     lastMessageText: text,
@@ -1218,11 +1190,11 @@
                     lastMessageStatus: "sent",
                     [`typing.${currentUser}`]: false,
                     [`unreadCounts.${otherUser}`]: firebase.firestore.FieldValue.increment(1),
-                    hiddenBy: [] // Gizlilik kalkar
+                    hiddenBy: [] 
                 });
 
                 input.value = "";
-                input.focus(); // KELİME ARDI SIRA YAZIMLARDA KLAVYENİN KAPANMASINI ENGELLER!
+                input.focus(); 
             } catch (err) {
                 console.error(err);
             }
@@ -1248,7 +1220,6 @@
             }, 2000);
         });
 
-        // Sohbet Listesi (Sıralama ve Tek Taraflı Silme Filtresi)
         function loadActiveChatsList() {
             db.collection("chats").orderBy("lastMessageTime", "desc").onSnapshot((snapshot) => {
                 const listContainer = document.getElementById("chatList");
@@ -1258,7 +1229,6 @@
                 snapshot.forEach((doc) => {
                     const chat = doc.data();
                     
-                    // Eğer sohbeti temizleyip benden gizlediysem listeleme
                     if (chat.hiddenBy && chat.hiddenBy.includes(currentUser)) return;
 
                     if (chat.users.includes(currentUser)) {
@@ -1289,7 +1259,7 @@
 
                         const chatHtml = `
                             <div id="item_${chat.chatId}" class="flex items-center gap-3 p-4 border-b border-slate-900/30 cursor-pointer transition-all ${itemBg}">
-                                <div class="w-11 h-11 theme-btn text-white font-bold rounded-2xl flex items-center justify-center text-sm shadow animate-fade-in">
+                                <div class="w-11 h-11 theme-btn text-white font-bold rounded-2xl flex items-center justify-center text-sm shadow">
                                     ${partner.substring(0,2).toUpperCase()}
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -1316,7 +1286,7 @@
 
                 if (!hasChat) {
                     listContainer.innerHTML = `
-                        <div class="flex flex-col items-center justify-center text-center p-8 mt-12 space-y-3 animate-fade-in">
+                        <div class="flex flex-col items-center justify-center text-center p-8 mt-12 space-y-3">
                             <div class="w-14 h-14 bg-blue-500/5 text-blue-500/40 rounded-2xl flex items-center justify-center text-xl">
                                 <i class="fa-solid fa-ghost"></i>
                             </div>
