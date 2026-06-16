@@ -14,7 +14,6 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
     <style>
-        /* Gizlilik modu (Mesajları Bulanıklaştır) stili */
         .blur-messages .message-content {
             filter: blur(6px);
             transition: filter 0.2s ease;
@@ -22,7 +21,6 @@
         .blur-messages .message-content:hover {
             filter: blur(0px);
         }
-        /* Özel kaydırma çubuğu */
         ::-webkit-scrollbar {
             width: 6px;
         }
@@ -37,45 +35,48 @@
 </head>
 <body class="bg-slate-950 text-slate-100 font-sans h-screen overflow-hidden flex flex-col justify-between">
 
-    <!-- GİRİŞ & TALEP OLUŞTURMA SİSİTEMİ (LOCK SCREEN) -->
+    <!-- GİRİŞ EKRANI (LOCK SCREEN) -->
     <div id="lockScreen" class="fixed inset-0 bg-slate-950 z-50 flex flex-col items-center justify-center p-4">
         <div class="bg-slate-900 border border-blue-500/30 p-8 rounded-2xl w-full max-w-md text-center shadow-2xl shadow-blue-500/10">
             <div class="w-16 h-16 bg-blue-600/10 border border-blue-500 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
-                <i class="fa-solid fa-lock"></i>
+                <i class="fa-solid fa-user-shield"></i>
             </div>
             <h2 class="text-xl font-bold text-white mb-2">BlueChat Giriş</h2>
-            <p class="text-slate-400 text-xs mb-6">Uygulamaya erişmek için kullanıcı adınızı ve şifrenizi girin.</p>
+            <p class="text-slate-400 text-xs mb-6">Lütfen kullanıcı adınızı ve şifre PIN kodunuzu girin.</p>
             
             <div class="space-y-4">
-                <!-- Kullanıcı Adı -->
                 <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-blue-500 text-sm">
                 
-                <!-- PIN Kodu -->
                 <input type="password" id="pinInput" placeholder="Şifre PIN Kodu" maxlength="6" class="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-3 text-center text-white tracking-widest focus:outline-none focus:border-blue-500 text-sm">
                 
                 <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 text-white py-3 rounded-xl text-sm font-semibold transition-all">
                     Giriş Yap
                 </button>
-
-                <div class="flex items-center my-4">
-                    <div class="flex-1 border-t border-slate-700"></div>
-                    <span class="px-3 text-slate-500 text-xs uppercase tracking-wider">veya</span>
-                    <div class="flex-1 border-t border-slate-700"></div>
-                </div>
-
-                <!-- Biyometrik Giriş -->
-                <button onclick="loginWithBiometric()" class="w-full bg-slate-800 hover:bg-slate-700 text-blue-400 border border-blue-500/20 py-3 px-4 rounded-xl font-semibold flex items-center justify-center gap-2 transition-all">
-                    <i class="fa-solid fa-fingerprint text-xl"></i>
-                    Parmak İzi ile Giriş
-                </button>
             </div>
+        </div>
+    </div>
+
+    <!-- İLK GİRİŞ İÇİN ZORUNLU PARMAK İZİ KAYIT MODALI (Kapatılamaz) -->
+    <div id="mandatoryBiometricModal" class="hidden fixed inset-0 bg-slate-950/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-slate-900 border border-blue-500/40 p-8 rounded-2xl w-full max-w-md text-center shadow-2xl">
+            <div class="w-20 h-20 bg-blue-600/10 border border-blue-500 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl animate-pulse">
+                <i class="fa-solid fa-fingerprint"></i>
+            </div>
+            <h3 class="text-xl font-bold text-white mb-2">Parmak İzi Zorunluluğu</h3>
+            <p class="text-slate-400 text-xs mb-6 leading-relaxed">
+                Ustam, hesabının güvenliği için **ilk girişte parmak izini kaydetmek zorunludur.** <br>
+                Bu işlem hesabını bu cihaza kilitleyecektir. Şifren çalınsa dahi parmağın olmadan kimse giriş yapamayacaktır.
+            </p>
+            <button onclick="registerMandatoryBiometric()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-bold py-3.5 rounded-xl text-sm transition-all flex items-center justify-center gap-2">
+                <i class="fa-solid fa-key"></i> Parmak İzimi Şimdi Tanımla
+            </button>
         </div>
     </div>
 
     <!-- HESAP BULUNAMADI & TALEP MODAL PENCERESİ -->
     <div id="requestModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-slate-900 border border-amber-500/30 p-6 rounded-2xl w-full max-w-sm text-center shadow-2xl">
-            <div class="w-14 h-14 bg-amber-500/10 border border-amber-500 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-xl animate-bounce">
+            <div class="w-14 h-14 bg-amber-500/10 border border-amber-500 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
                 <i class="fa-solid fa-triangle-exclamation"></i>
             </div>
             <h3 class="text-lg font-bold text-white mb-2">Hesabınız Bulunmamaktadır</h3>
@@ -97,7 +98,6 @@
         
         <!-- SOL PANEL: SOHBET LİSTESİ & AYARLAR -->
         <div class="w-full md:w-80 lg:w-96 bg-slate-900 border-r border-slate-800 flex flex-col">
-            <!-- Profil ve Hızlı Araçlar -->
             <div class="p-4 bg-slate-950 flex justify-between items-center border-b border-slate-800">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-lg" id="myAvatar">
@@ -109,11 +109,8 @@
                     </div>
                 </div>
                 <div class="flex gap-3 text-slate-400">
-                    <button onclick="togglePrivacyMode()" id="privacyBtn" title="Gizlilik Modu (Mesajları Bulanıklaştır)" class="hover:text-blue-400 transition-colors">
+                    <button onclick="togglePrivacyMode()" id="privacyBtn" title="Gizlilik Modu" class="hover:text-blue-400 transition-colors">
                         <i class="fa-solid fa-eye-slash"></i>
-                    </button>
-                    <button onclick="openSettingsModal()" title="Ayarlar" class="hover:text-blue-400 transition-colors">
-                        <i class="fa-solid fa-gear"></i>
                     </button>
                     <button onclick="logout()" title="Çıkış Yap" class="hover:text-red-400 transition-colors">
                         <i class="fa-solid fa-right-from-bracket"></i>
@@ -121,7 +118,7 @@
                 </div>
             </div>
 
-            <!-- Yeni Sohbet Başlatma / Kullanıcı Arama -->
+            <!-- Kullanıcı Arama -->
             <div class="p-3 border-b border-slate-800/50">
                 <div class="flex gap-2">
                     <input type="text" id="searchUserField" placeholder="Kullanıcı adı ara..." class="flex-1 bg-slate-800 text-slate-200 px-3 py-2 rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-blue-500">
@@ -135,9 +132,8 @@
             </div>
         </div>
 
-        <!-- SAĞ PANEL: AKTİF SOHBET PENCERESİ -->
+        <!-- SAĞ PANEL: SOHBET ARKA PLANI VE PENCERESİ -->
         <div class="hidden md:flex flex-1 flex-col bg-slate-950 relative" id="activeChatContainer">
-            <!-- Sohbet Header -->
             <div class="p-4 bg-slate-900 flex justify-between items-center border-b border-slate-800 z-10">
                 <div class="flex items-center gap-3">
                     <div id="activeAvatar" class="w-11 h-11 bg-gradient-to-tr from-blue-600 to-sky-400 rounded-full flex items-center justify-center text-white font-bold">
@@ -153,14 +149,14 @@
                 </div>
             </div>
 
-            <!-- Mesajların Listelendiği Alan -->
+            <!-- Mesaj Listesi -->
             <div id="chatBackground" class="flex-1 overflow-y-auto p-6 flex flex-col justify-end bg-cover bg-center" style="background-color: #0f172a;">
                 <div id="messageContainer" class="space-y-3 overflow-y-auto max-h-[75vh]">
-                    <!-- Mesajlar buraya akacak -->
+                    <!-- Mesajlar -->
                 </div>
             </div>
 
-            <!-- Giriş Alanı -->
+            <!-- Mesaj Girişi -->
             <div class="p-4 bg-slate-900 border-t border-slate-800 flex items-center gap-3 z-10">
                 <input type="text" id="messageInput" onkeypress="handleKeyPress(event)" placeholder="Bir mesaj yazın..." class="flex-1 bg-slate-800 text-slate-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm">
                 <button onclick="sendMessage()" class="w-10 h-10 bg-blue-600 hover:bg-blue-500 text-white rounded-full flex items-center justify-center transition-colors">
@@ -169,36 +165,14 @@
             </div>
         </div>
 
-        <!-- BOŞ HOŞ GELDİNİZ EKRANI -->
+        <!-- BOŞ EKRAN -->
         <div class="flex-1 hidden md:flex flex-col items-center justify-center bg-slate-950 text-slate-400" id="welcomeScreen">
             <div class="text-center space-y-4">
                 <div class="w-24 h-24 bg-blue-600/10 border border-blue-500/20 text-blue-500 rounded-full flex items-center justify-center mx-auto text-4xl shadow-xl">
                     <i class="fa-solid fa-comments"></i>
                 </div>
                 <h3 class="text-xl font-bold text-slate-200">BlueChat</h3>
-                <p class="text-sm max-w-sm mx-auto text-slate-400">Gerçek zamanlı, güvenli ve onaylı sohbet ortamına hoş geldiniz.</p>
-            </div>
-        </div>
-    </div>
-
-    <!-- MODAL: GÜVENLİK VE AYARLAR -->
-    <div id="settingsModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
-        <div class="bg-slate-900 border border-slate-800 p-6 rounded-2xl w-full max-w-md shadow-2xl">
-            <div class="flex justify-between items-center mb-6 border-b border-slate-800 pb-3">
-                <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-gear text-blue-500 mr-2"></i> Ayarlar & Biyometri</h3>
-                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
-            </div>
-            
-            <div class="space-y-6">
-                <!-- Biyometrik Tanımlama -->
-                <div>
-                    <label class="block text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Bu Cihazın Parmak İzini Kaydet</label>
-                    <p class="text-xs text-slate-500 mb-3">Hesabınıza bu cihazın parmak izi anahtarını tanımlar. Sonraki girişlerinizde parmak izinizle şifresiz girebilirsiniz.</p>
-                    <button onclick="registerBiometric()" class="w-full bg-blue-600 hover:bg-blue-500 text-white font-semibold py-2.5 rounded-lg text-sm flex items-center justify-center gap-2 transition-colors">
-                        <i class="fa-solid fa-fingerprint"></i>
-                        Cihaz Parmak İzini Kaydet
-                    </button>
-                </div>
+                <p class="text-sm max-w-sm mx-auto text-slate-400">Çift katmanlı biyometrik koruma ve onaylı mesajlaşma sistemi.</p>
             </div>
         </div>
     </div>
@@ -210,8 +184,6 @@
                 <h3 class="text-lg font-bold text-white"><i class="fa-solid fa-image text-blue-500 mr-2"></i> Sohbet Duvar Kağıdı</h3>
                 <button onclick="closeWallpaperModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
-
-            <!-- Düz Renkler -->
             <label class="block text-xs font-semibold text-slate-400 mb-2">Düz Renk Seç</label>
             <div class="grid grid-cols-5 gap-2 mb-4">
                 <div onclick="changeBgColor('#0f172a')" class="h-10 rounded cursor-pointer border border-white/10 hover:border-blue-500" style="background-color: #0f172a;"></div>
@@ -220,8 +192,6 @@
                 <div onclick="changeBgColor('#0d1b2a')" class="h-10 rounded cursor-pointer border border-white/10 hover:border-blue-500" style="background-color: #0d1b2a;"></div>
                 <div onclick="changeBgColor('#1b263b')" class="h-10 rounded cursor-pointer border border-white/10 hover:border-blue-500" style="background-color: #1b263b;"></div>
             </div>
-
-            <!-- Doğa Görselleri -->
             <label class="block text-xs font-semibold text-slate-400 mb-2">Hazır Görseller</label>
             <div class="grid grid-cols-4 gap-2">
                 <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=150&auto=format&fit=crop" onclick="changeBgImage(this.src)" class="h-12 w-full object-cover rounded cursor-pointer border border-transparent hover:border-blue-500">
@@ -232,9 +202,9 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT BAĞLANTI VE DİNAMİK YÖNETİM -->
+    <!-- JAVASCRIPT GÜVENLİK VE VERİ MANTIĞI -->
     <script>
-        // Firebase Yapılandırması (Paylaştığın Bilgiler)
+        // Firebase Yapılandırması
         const firebaseConfig = {
             apiKey: "AIzaSyBH-8I085mtVbbsh4ct8_GdwU-TXgSxdAM",
             authDomain: "alternativewp-92776.firebaseapp.com",
@@ -245,11 +215,10 @@
             measurementId: "G-HMQJRV4KW5"
         };
 
-        // Başlatma
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
-        // Durum Değişkenleri
+        // Durumlar
         let currentUser = null;
         let activeChatId = null;
         let otherUser = null;
@@ -258,7 +227,7 @@
         let unsubStatus = null;
         let typingTimeout = null;
 
-        // --- YARDIMCI DÖNÜŞTÜRÜCÜLER (Parmak izi verileri için) ---
+        // Biyometri Yardımcıları
         function bufferToBase64(buffer) {
             let binary = '';
             let bytes = new Uint8Array(buffer);
@@ -277,8 +246,7 @@
             return bytes.buffer;
         }
 
-        // --- GİRİŞ VE TALEP OLUŞTURMA MANTIĞI ---
-        
+        // --- GİRİŞ VE GÜVENLİK DENETLEMESİ ---
         async function handleLogin() {
             const username = document.getElementById("usernameInput").value.trim().toLowerCase();
             const pin = document.getElementById("pinInput").value.trim();
@@ -289,40 +257,86 @@
             }
 
             try {
-                // Önce aktif kullanıcılar listesine bak
                 const userDoc = await db.collection("users").doc(username).get();
                 
                 if (userDoc.exists) {
                     const userData = userDoc.data();
+                    
                     if (userData.pin === pin) {
-                        // Giriş başarılı
-                        successfulLogin(username);
+                        const credentials = userData.credentials || [];
+                        
+                        // İKİ FAKTÖRLÜ DOĞRULAMA KONTROLÜ
+                        if (credentials.length > 0) {
+                            // Hesapta parmak izi tanımlı: Parmak izi okutulması ZORUNLU!
+                            alert("Şifre PIN kodu onaylandı. Girişi tamamlamak için lütfen cihazınızda parmak izinizi doğrulayın.");
+                            
+                            const authSuccess = await verifyBiometricLogin(username, credentials);
+                            if (authSuccess) {
+                                successfulLogin(username, userData);
+                            } else {
+                                alert("Biyometrik doğrulama başarısız! Giriş engellendi.");
+                            }
+                        } else {
+                            // Parmak izi yok (İlk Giriş): Doğrudan giriş yap ama zorunlu kayıt modalını tetikle
+                            successfulLogin(username, userData);
+                        }
                     } else {
                         alert("Hatalı şifre PIN kodu! Lütfen tekrar deneyin.");
                     }
                 } else {
-                    // Kullanıcı yok, peki bekleyen bir talep var mı ona bakalım
                     const reqDoc = await db.collection("requests").doc(username).get();
                     if (reqDoc.exists) {
                         alert("Zaten bekleyen bir hesap açılış talebiniz bulunmaktadır. Lütfen yöneticinin onaylamasını bekleyin.");
                     } else {
-                        // Hiç hesap yok, talep modalını aç
                         openRequestModal();
                     }
                 }
             } catch (err) {
                 console.error(err);
-                alert("Giriş esnasında hata: " + err.message);
+                alert("Hata: " + err.message);
             }
         }
 
-        // Talep Gönderme İşlemi
+        // Parmak İzini Doğrulayan Fonksiyon
+        async function verifyBiometricLogin(username, credentials) {
+            if (!window.PublicKeyCredential) {
+                alert("Tarayıcınız veya cihazınız biyometrik doğrulamayı desteklemiyor.");
+                return false;
+            }
+            try {
+                const allowCredentials = credentials.map(cred => ({
+                    id: base64ToBuffer(cred.id),
+                    type: "public-key"
+                }));
+
+                const randomChallenge = new Uint8Array(32);
+                window.crypto.getRandomValues(randomChallenge);
+
+                const publicKeyCredentialRequestOptions = {
+                    challenge: randomChallenge,
+                    allowCredentials: allowCredentials,
+                    userVerification: "required",
+                    timeout: 60000
+                };
+
+                const assertion = await navigator.credentials.get({
+                    publicKey: publicKeyCredentialRequestOptions
+                });
+
+                return !!assertion;
+            } catch (err) {
+                console.error("Biyometrik doğrulama hatası: ", err);
+                return false;
+            }
+        }
+
+        // Hesap Başvurusu Gönderme
         async function createMembershipRequest() {
             const username = document.getElementById("usernameInput").value.trim().toLowerCase();
             const pin = document.getElementById("pinInput").value.trim();
 
             if (pin.length < 4) {
-                alert("Talep için belirleyeceğiniz PIN en az 4 haneli olmalıdır.");
+                alert("Güvenliğiniz için belirleyeceğiniz PIN en az 4 haneli olmalıdır.");
                 closeRequestModal();
                 return;
             }
@@ -333,7 +347,7 @@
                     pin: pin,
                     timestamp: Date.now()
                 });
-                alert("Üyelik talebiniz başarıyla gönderilmiştir! Yönetici onayladığı an bu PIN kodunuzla giriş yapabilirsiniz.");
+                alert("Üyelik talebiniz başarıyla gönderilmiştir! Yönetici onayladığı an bu PIN kodunuzla ilk girişinizi yapabilirsiniz.");
                 closeRequestModal();
             } catch (err) {
                 alert("Talep gönderilemedi: " + err.message);
@@ -347,36 +361,41 @@
             document.getElementById("requestModal").classList.add("hidden");
         }
 
-        // Başarılı Giriş Sonrası İşlemler
-        async function successfulLogin(username) {
+        // Başarılı Oturum Açılması
+        async function successfulLogin(username, userData) {
             currentUser = username;
-            document.getElementById("lockScreen").classList.add("hidden");
+            
+            const credentials = userData.credentials || [];
+            
+            // Eğer daha önce parmak izi tanımlanmamışsa ZORUNLU MODALI AÇ, yoksa giriş ekranını gizle
+            if (credentials.length === 0) {
+                document.getElementById("mandatoryBiometricModal").classList.remove("hidden");
+            } else {
+                document.getElementById("lockScreen").classList.add("hidden");
+            }
+
             document.getElementById("myDisplayName").innerText = username.toUpperCase();
             document.getElementById("myAvatar").innerText = username.substring(0, 2).toUpperCase();
             
-            // Kullanıcıyı online yap
             await db.collection("users").doc(currentUser).update({
                 status: "online"
             });
 
-            // Ayarları ve aktif sohbetleri çek
             initAppSettings();
             loadActiveChatsList();
         }
 
-        // --- BİYOMETRİK (PARMAK İZİ) İŞLEMLERİ ---
-
-        // Parmak İzi Kaydetme (Ayarlar Menüsünden)
-        async function registerBiometric() {
+        // --- İLK GİRİŞTE ZORUNLU PARMAK İZİ TANIMLAMA MANTIĞI ---
+        async function registerMandatoryBiometric() {
             if (!currentUser) return;
 
             if (!window.PublicKeyCredential) {
-                alert("Cihazınız parmak izi doğrulamayı desteklemiyor.");
+                alert("Tarayıcınız veya cihazınız biyometrik kaydı desteklemiyor.");
                 return;
             }
 
             if (window.location.protocol !== "https:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-                alert("Güvenlik nedeniyle parmak izi kaydı sadece HTTPS web sitelerinde veya localhost'ta çalışabilir.");
+                alert("Tarayıcı güvenliği nedeniyle parmak izi tanımlaması sadece HTTPS veya localhost üzerinde çalışır.");
                 return;
             }
 
@@ -416,74 +435,35 @@
                 
                 const credentialIdBase64 = bufferToBase64(credential.rawId);
                 
-                // Firestore'daki kullanıcının 'credentials' listesine ekle
+                // Anahtarı veritabanına kaydet
                 await db.collection("users").doc(currentUser).update({
                     credentials: firebase.firestore.FieldValue.arrayUnion({ id: credentialIdBase64 })
                 });
 
-                alert("Parmak iziniz bu hesap için sisteme başarıyla tanımlandı!");
-                closeSettingsModal();
+                alert("Harika! Parmak iziniz başarıyla tanımlandı ve hesabınız kilitlendi.");
+                
+                // Zorunlu kilit ekranlarını tamamen kapat
+                document.getElementById("mandatoryBiometricModal").classList.add("hidden");
+                document.getElementById("lockScreen").classList.add("hidden");
             } catch (err) {
                 console.error(err);
-                alert("Parmak izi kaydedilemedi: " + err.message);
+                alert("Biyometrik tanımlama tamamlanamadı! Giriş yapabilmek için parmak izinizi tanımlamalısınız.");
             }
         }
 
-        // Parmak İzi ile Giriş Yapma (Giriş Ekranından)
-        async function loginWithBiometric() {
+        // Parmak izi olmadan doğrudan butonla girişi engelliyoruz (Biyometrik Giriş Butonunu sadece otomatik sarmalayıcıya yönlendiriyoruz)
+        function loginWithBiometric() {
             const username = document.getElementById("usernameInput").value.trim().toLowerCase();
             if (!username) {
-                alert("Parmak iziyle giriş yapmak için önce Kullanıcı Adınızı yazmalısınız.");
+                alert("Önce Kullanıcı Adınızı yazmalısınız.");
                 return;
             }
-
-            try {
-                const userDoc = await db.collection("users").doc(username).get();
-                if (!userDoc.exists) {
-                    alert("Kullanıcı bulunamadı.");
-                    return;
-                }
-
-                const userData = userDoc.data();
-                const credentials = userData.credentials || [];
-
-                if (credentials.length === 0) {
-                    alert("Bu hesap için kayıtlı parmak izi yok. Lütfen önce PIN ile girip ayarlardan parmak izinizi kaydedin.");
-                    return;
-                }
-
-                const allowCredentials = credentials.map(cred => ({
-                    id: base64ToBuffer(cred.id),
-                    type: "public-key"
-                }));
-
-                const randomChallenge = new Uint8Array(32);
-                window.crypto.getRandomValues(randomChallenge);
-
-                const publicKeyCredentialRequestOptions = {
-                    challenge: randomChallenge,
-                    allowCredentials: allowCredentials,
-                    userVerification: "required",
-                    timeout: 60000
-                };
-
-                const assertion = await navigator.credentials.get({
-                    publicKey: publicKeyCredentialRequestOptions
-                });
-
-                if (assertion) {
-                    successfulLogin(username);
-                }
-            } catch (err) {
-                console.error(err);
-                alert("Parmak izi doğrulama başarısız.");
-            }
+            alert("Giriş yapmak için şifre PIN kodunuzu yazıp 'Giriş Yap' butonuna basın. Ardından parmak izi doğrulama otomatik açılacaktır.");
         }
 
 
-        // --- SOHBET YÖNETİMİ & GERÇEK ZAMANLI MESAJLAŞMA ---
+        // --- REAL-TIME MESAJLAŞMA SİSTEMİ ---
 
-        // Yeni Sohbet Odası Başlatma
         async function startNewChat() {
             const targetUser = document.getElementById("searchUserField").value.trim().toLowerCase();
             if (!targetUser || targetUser === currentUser) return;
@@ -491,7 +471,7 @@
             try {
                 const userDoc = await db.collection("users").doc(targetUser).get();
                 if (!userDoc.exists) {
-                    alert("Aradığınız kullanıcı bulunamadı.");
+                    alert("Kullanıcı bulunamadı.");
                     return;
                 }
 
@@ -517,7 +497,6 @@
             }
         }
 
-        // Sohbet Odasını Seçme ve Dinleme
         function selectChatRoom(chatId, targetUserDoc) {
             activeChatId = chatId;
             otherUser = targetUserDoc;
@@ -532,7 +511,6 @@
             listenMessages();
         }
 
-        // Mesajları Gerçek Zamanlı Dinle (onSnapshot)
         function listenMessages() {
             if (unsubMessages) unsubMessages();
 
@@ -542,7 +520,6 @@
                 const container = document.getElementById("messageContainer");
                 container.innerHTML = "";
 
-                // Okundu tık güncellemesi için toplu işlem
                 const batch = db.batch();
                 let hasUpdates = false;
 
@@ -560,7 +537,6 @@
                         }
                     }
 
-                    // Mesaj bana ait değilse ve okunmadıysa "okundu" yap
                     if (!isMe && msg.status === "sent") {
                         batch.update(doc.ref, { status: "read" });
                         hasUpdates = true;
@@ -586,14 +562,12 @@
                     batch.commit().catch(err => console.error(err));
                 }
 
-                // Otomatik aşağı kaydır
                 setTimeout(() => {
                     document.getElementById("chatBackground").scrollTop = document.getElementById("chatBackground").scrollHeight;
                 }, 50);
             });
         }
 
-        // Karşı tarafın "Yazıyor..." ve "Çevrimiçi" durumunu izle
         function listenOtherUserStatus() {
             if (unsubStatus) unsubStatus();
 
@@ -614,7 +588,6 @@
             });
         }
 
-        // Mesaj Gönderme
         async function sendMessage() {
             const input = document.getElementById("messageInput");
             const text = input.value.trim();
@@ -628,7 +601,6 @@
                     status: "sent"
                 });
 
-                // Son aktiflik zamanı güncelle ve yazıyor durumunu kapat
                 await db.collection("chats").doc(activeChatId).update({
                     lastMessageTime: Date.now(),
                     [`typing.${currentUser}`]: false
@@ -640,7 +612,6 @@
             }
         }
 
-        // Yazıyor... Durumunu Veritabanına Kaydetme
         async function setTypingStatus(status) {
             if (!activeChatId || !currentUser) return;
             try {
@@ -652,18 +623,15 @@
             }
         }
 
-        // Yazı yazma dinleyicisi (Yazıyor... tetikleyici)
         const inputField = document.getElementById("messageInput");
         inputField.addEventListener("input", () => {
             setTypingStatus(true);
             clearTimeout(typingTimeout);
             typingTimeout = setTimeout(() => {
                 setTypingStatus(false);
-            }, 2000); // 2 saniye yazılmazsa yazıyor durumu kapanır
+            }, 2000);
         });
 
-
-        // Sohbet Listesini Sol Panelde Gösterme
         function loadActiveChatsList() {
             db.collection("chats").onSnapshot((snapshot) => {
                 const listContainer = document.getElementById("chatList");
@@ -705,8 +673,7 @@
         }
 
 
-        // --- 9. AYARLAR VE ÇIKIŞ İŞLEMLERİ ---
-
+        // --- AYARLAR VE ÇIKIŞ ---
         function initAppSettings() {
             const savedBg = localStorage.getItem("chat_background");
             if (savedBg) {
@@ -771,15 +738,13 @@
         window.handleLogin = handleLogin;
         window.loginWithBiometric = loginWithBiometric;
         window.createMembershipRequest = createMembershipRequest;
-        window.registerBiometric = registerBiometric;
+        window.registerMandatoryBiometric = registerMandatoryBiometric;
         window.startNewChat = startNewChat;
         window.sendMessage = sendMessage;
         window.togglePrivacyMode = togglePrivacyMode;
         window.logout = logout;
         window.closeRequestModal = closeRequestModal;
 
-        window.openSettingsModal = () => document.getElementById("settingsModal").classList.remove("hidden");
-        window.closeSettingsModal = () => document.getElementById("settingsModal").classList.add("hidden");
         window.openWallpaperModal = () => document.getElementById("wallpaperModal").classList.remove("hidden");
         window.closeWallpaperModal = () => document.getElementById("wallpaperModal").classList.add("hidden");
         window.changeBgColor = changeBgColor;
