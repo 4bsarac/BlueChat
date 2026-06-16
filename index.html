@@ -14,6 +14,36 @@
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore-compat.js"></script>
 
     <style>
+        /* CSS Değişkenleri Üzerinden Dinamik Tema Yönetimi */
+        :root {
+            --theme-bg: #070b19;
+            --theme-sidebar: #090e1c;
+            --theme-sender-bg: #2563eb;
+            --theme-receiver-bg: #1e293b;
+            --theme-primary: #3b82f6;
+            --theme-primary-hover: #2563eb;
+        }
+
+        body {
+            background-color: var(--theme-bg);
+            transition: background-color 0.4s ease;
+        }
+
+        /* Tema Değişken Atamaları */
+        .theme-app {
+            background-color: var(--theme-bg);
+        }
+        .theme-sidebar {
+            background-color: var(--theme-sidebar);
+        }
+        .theme-btn {
+            background-color: var(--theme-primary);
+        }
+        .theme-btn:hover {
+            background-color: var(--theme-primary-hover);
+        }
+
+        /* Mesaj Bulanıklaştırma (Gizlilik Modu) */
         .blur-messages .message-content {
             filter: blur(8px);
             transition: filter 0.3s ease;
@@ -21,43 +51,49 @@
         .blur-messages .message-content:hover {
             filter: blur(0px);
         }
+
+        /* Özel Kaydırma Çubuğu */
         ::-webkit-scrollbar {
             width: 5px;
         }
         ::-webkit-scrollbar-track {
-            background: #0b1329;
+            background: rgba(0,0,0,0.1);
         }
         ::-webkit-scrollbar-thumb {
-            background: #1d4ed8;
+            background: var(--theme-primary);
             border-radius: 10px;
+        }
+
+        /* Mobilde Ekranın Kayarak Açılma Animasyonu */
+        @media (max-width: 767px) {
+            .slide-panel {
+                transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+            }
         }
     </style>
 </head>
-<body class="bg-[#070b19] text-slate-100 font-sans h-screen overflow-hidden flex flex-col justify-between">
+<body class="text-slate-100 font-sans h-screen overflow-hidden flex flex-col justify-between">
 
     <!-- GİRİŞ EKRANI (LOCK SCREEN) -->
     <div id="lockScreen" class="fixed inset-0 bg-[#070b19] z-50 flex flex-col items-center justify-center p-4">
         <div class="bg-[#0f172a] border border-blue-500/20 p-8 rounded-[2rem] w-full max-w-md text-center shadow-2xl shadow-blue-500/5">
-            <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-6 text-2xl">
+            <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl">
                 <i class="fa-solid fa-user-shield"></i>
             </div>
             <h2 class="text-2xl font-bold text-white mb-2 tracking-tight">BlueChat</h2>
-            <p class="text-slate-400 text-xs mb-6">Uygulamaya erişmek için bilgilerinizi girin.</p>
+            <p class="text-slate-400 text-xs mb-6">Giriş yapmak için bilgilerinizi girin.</p>
             
             <div class="space-y-4 text-left">
-                <!-- Kullanıcı Adı -->
                 <div>
                     <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-white focus:outline-none focus:border-blue-500 text-sm transition-colors">
                     <p id="usernameError" class="text-red-400 text-[11px] mt-1.5 ml-2 hidden"></p>
                 </div>
                 
-                <!-- PIN Kodu -->
                 <div>
                     <input type="password" id="pinInput" placeholder="Şifre PIN Kodu" maxlength="6" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-center text-white tracking-widest focus:outline-none focus:border-blue-500 text-sm transition-colors">
                     <p id="pinError" class="text-red-400 text-[11px] mt-1.5 ml-2 hidden"></p>
                 </div>
 
-                <!-- Genel Giriş Hatası -->
                 <p id="generalLoginError" class="text-red-400 text-xs text-center font-medium hidden"></p>
                 
                 <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white py-3.5 rounded-2xl text-sm font-semibold transition-all shadow-lg shadow-blue-600/20">
@@ -75,7 +111,7 @@
             </div>
             <h3 class="text-xl font-bold text-white mb-2 tracking-tight">Parmak İzi Zorunluluğu</h3>
             <p class="text-slate-400 text-xs mb-6 leading-relaxed">
-                Hesabınız başarıyla onaylandı! Güvenliğiniz için **ilk girişte parmak izinizi kaydetmeniz zorunludur.** Şifreniz çalınsa dahi parmağınız olmadan kimse bu hesaba giremez.
+                Hesabınız onaylandı! Güvenliğiniz için **ilk girişte parmak izinizi kaydetmeniz zorunludur.** Şifreniz çalınsa dahi parmağınız olmadan kimse bu hesaba giremez.
             </p>
             <button onclick="registerMandatoryBiometric()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
                 <i class="fa-solid fa-key"></i> Parmak İzimi Şimdi Tanımla
@@ -104,14 +140,14 @@
     </div>
 
     <!-- ANA UYGULAMA PANELİ -->
-    <div class="flex h-screen w-full relative">
+    <div class="flex h-screen w-full relative overflow-hidden">
         
         <!-- SOL PANEL: SOHBET LİSTESİ -->
-        <div id="sidebar" class="w-full md:w-80 lg:w-96 bg-[#090e1c] border-r border-slate-900 flex flex-col transition-all duration-300 z-25">
+        <div id="sidebar" class="slide-panel absolute md:relative left-0 top-0 h-full w-full md:w-80 lg:w-96 theme-sidebar border-r border-slate-900 flex flex-col z-20 transform translate-x-0">
             <!-- Profil ve Hızlı Araçlar -->
-            <div class="p-4 bg-[#070b19] flex justify-between items-center border-b border-slate-900">
+            <div class="p-4 theme-app flex justify-between items-center border-b border-slate-900">
                 <div class="flex items-center gap-3">
-                    <div class="w-10 h-10 bg-blue-600 rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-md shadow-blue-600/10" id="myAvatar">
+                    <div class="w-10 h-10 theme-btn rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-md" id="myAvatar">
                         ?
                     </div>
                     <div>
@@ -123,6 +159,9 @@
                     <button onclick="togglePrivacyMode()" id="privacyBtn" title="Gizlilik Modu" class="hover:text-blue-500 transition-colors">
                         <i class="fa-solid fa-eye-slash text-base"></i>
                     </button>
+                    <button onclick="openSettingsModal()" title="Ayarlar" class="hover:text-blue-500 transition-colors">
+                        <i class="fa-solid fa-gear text-base"></i>
+                    </button>
                     <button onclick="logout()" title="Çıkış Yap" class="hover:text-red-500 transition-colors">
                         <i class="fa-solid fa-power-off text-base"></i>
                     </button>
@@ -130,25 +169,24 @@
             </div>
 
             <!-- Kullanıcı Arama -->
-            <div class="p-3 bg-[#070b19]/40 border-b border-slate-900/50">
+            <div class="p-3 theme-app border-b border-slate-900/50">
                 <div class="flex gap-2">
                     <input type="text" id="searchUserField" placeholder="Kullanıcı adı ara..." class="flex-1 bg-[#131b2e] text-slate-200 px-4 py-2.5 rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
-                    <button onclick="startNewChat()" class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2.5 rounded-2xl text-xs font-semibold transition-all shadow-md shadow-blue-600/10">Sohbet Aç</button>
+                    <button onclick="startNewChat()" class="theme-btn text-white px-4 py-2.5 rounded-2xl text-xs font-semibold transition-all shadow-md">Sohbet Aç</button>
                 </div>
             </div>
 
             <!-- Sohbet Listesi Container -->
             <div class="flex-1 overflow-y-auto" id="chatList">
-                <!-- Dinamik Liste Gelecek -->
+                <!-- Dinamik Sohbetler Buraya Gelecek -->
             </div>
         </div>
 
-        <!-- SAĞ PANEL: SOHBET ARKA PLANI VE PENCERESİ -->
-        <div id="activeChatContainer" class="hidden md:flex flex-1 flex-col bg-[#070b19] relative transition-all duration-300 z-30">
+        <!-- SAĞ PANEL: SOHBET PENCERESİ -->
+        <div id="activeChatContainer" class="slide-panel absolute md:relative right-0 top-0 h-full w-full md:flex-1 theme-app flex flex-col z-30 transform translate-x-full md:translate-x-0">
             <!-- Sohbet Header -->
-            <div class="p-4 bg-[#090e1c] flex justify-between items-center border-b border-slate-900 z-10">
+            <div class="p-4 theme-sidebar flex justify-between items-center border-b border-slate-900 z-10">
                 <div class="flex items-center gap-3">
-                    <!-- Mobilde Geri Butonu -->
                     <button onclick="goBackToList()" class="md:hidden text-slate-400 hover:text-white mr-2 transition-colors">
                         <i class="fa-solid fa-chevron-left text-lg"></i>
                     </button>
@@ -166,23 +204,23 @@
             </div>
 
             <!-- Mesaj Listesi -->
-            <div id="chatBackground" class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col justify-end bg-cover bg-center transition-all" style="background-color: #0b1120;">
+            <div id="chatBackground" class="flex-1 overflow-y-auto p-4 md:p-6 flex flex-col justify-end bg-cover bg-center transition-all">
                 <div id="messageContainer" class="space-y-3 overflow-y-auto max-h-[72vh]">
-                    <!-- Mesajlar buraya akacak -->
+                    <!-- Mesajlar -->
                 </div>
             </div>
 
             <!-- Mesaj Giriş Alanı -->
-            <div class="p-4 bg-[#090e1c] border-t border-slate-900 flex items-center gap-3 z-10">
+            <div class="p-4 theme-sidebar border-t border-slate-900 flex items-center gap-3 z-10">
                 <input type="text" id="messageInput" onkeypress="handleKeyPress(event)" placeholder="Bir mesaj yazın..." class="flex-1 bg-[#131b2e] text-slate-100 px-5 py-3 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm transition-all">
-                <button onclick="sendMessage()" class="w-11 h-11 bg-blue-600 hover:bg-blue-500 active:scale-95 text-white rounded-2xl flex items-center justify-center transition-all shadow-md shadow-blue-600/10">
+                <button onclick="sendMessage()" class="w-11 h-11 theme-btn active:scale-95 text-white rounded-2xl flex items-center justify-center transition-all shadow-md">
                     <i class="fa-solid fa-paper-plane text-sm pl-0.5"></i>
                 </button>
             </div>
         </div>
 
-        <!-- BOŞ EKRAN (Sohbet Seçilmediğinde Masaüstünde Görünür) -->
-        <div class="flex-1 hidden md:flex flex-col items-center justify-center bg-[#070b19] text-slate-500 z-10" id="welcomeScreen">
+        <!-- BOŞ EKRAN (Masaüstü için) -->
+        <div class="flex-1 hidden md:flex flex-col items-center justify-center theme-app text-slate-500 z-10 animate-fade-in" id="welcomeScreen">
             <div class="text-center space-y-4">
                 <div class="w-20 h-20 bg-blue-600/5 border border-blue-500/10 text-blue-500/80 rounded-[2rem] flex items-center justify-center mx-auto text-3xl shadow-xl">
                     <i class="fa-solid fa-comments"></i>
@@ -193,11 +231,75 @@
         </div>
     </div>
 
-    <!-- MODAL: DUVAR KAĞIDI SEÇİMİ -->
+    <!-- MODAL: YENİ GELİŞMİŞ AYARLAR VE ÖNİZLEMELİ TEMA PANELİ -->
+    <div id="settingsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-[#0f172a] border border-slate-800 p-6 rounded-[2.5rem] w-full max-w-lg shadow-2xl flex flex-col gap-6">
+            <div class="flex justify-between items-center border-b border-slate-800 pb-3">
+                <h3 class="text-base font-bold text-white"><i class="fa-solid fa-user-gear text-blue-500 mr-2"></i> Hesap Ayarları & Tema</h3>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- Hesap Bilgileri Düzenleme Bölümü -->
+                <div class="space-y-4">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Profil Bilgileri</h4>
+                    
+                    <!-- Görünen İsim Düzenleme -->
+                    <div>
+                        <label class="block text-[10px] text-slate-500 mb-1 font-semibold">Görünen Adınız (Display Name)</label>
+                        <input type="text" id="settingsDisplayNameInput" placeholder="Örn: Ahmet Yılmaz" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <!-- PIN Şifre Düzenleme -->
+                    <div>
+                        <label class="block text-[10px] text-slate-500 mb-1 font-semibold">Giriş PIN Kodunu Güncelle</label>
+                        <input type="password" id="settingsPinInput" placeholder="Yeni 4-6 Haneli PIN" maxlength="6" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                    </div>
+
+                    <!-- Parmak İzi Güncelleme -->
+                    <div>
+                        <label class="block text-[10px] text-slate-500 mb-2 font-semibold">Biyometrik Kimlik Kaydı</label>
+                        <button onclick="registerBiometric()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors">
+                            <i class="fa-solid fa-fingerprint text-blue-400"></i> Yeni Parmak İzi Tanımla
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Önizlemeli Tema Seçimi Bölümü -->
+                <div class="space-y-4 flex flex-col justify-between">
+                    <div>
+                        <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tema Şablonu Seçin</h4>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="previewTheme('sapphire')" class="p-2.5 bg-[#0b1120] border border-blue-500/20 rounded-xl text-xs font-semibold text-blue-400 text-center hover:border-blue-500 transition-colors">Safir Gecesi</button>
+                            <button onclick="previewTheme('emerald')" class="p-2.5 bg-[#041c15] border border-emerald-500/20 rounded-xl text-xs font-semibold text-emerald-400 text-center hover:border-emerald-500 transition-colors">Zümrüt Ormanı</button>
+                            <button onclick="previewTheme('monochrome')" class="p-2.5 bg-[#0e0f11] border border-slate-700 rounded-xl text-xs font-semibold text-slate-300 text-center hover:border-slate-500 transition-colors">Kömür Grisi</button>
+                            <button onclick="previewTheme('purple')" class="p-2.5 bg-[#120924] border border-purple-500/20 rounded-xl text-xs font-semibold text-purple-400 text-center hover:border-purple-500 transition-colors">Asil Mor</button>
+                        </div>
+                    </div>
+
+                    <!-- Canlı Tema Önizleme Alanı -->
+                    <div class="border border-slate-800 p-3 rounded-2xl flex flex-col gap-2 bg-slate-950">
+                        <span class="text-[9px] text-slate-500 uppercase font-bold tracking-wider block">Tema Önizlemesi</span>
+                        <div id="themePreviewBox" class="rounded-xl p-3 flex flex-col gap-2 h-24 overflow-hidden transition-colors" style="background-color: #070b19;">
+                            <div class="px-2.5 py-1.5 text-[10px] rounded-lg max-w-[80%] self-end text-white" id="previewSenderBubble" style="background-color: #2563eb;">Gönderen Mesajı</div>
+                            <div class="px-2.5 py-1.5 text-[10px] rounded-lg max-w-[80%] self-start text-slate-200" id="previewReceiverBubble" style="background-color: #1e293b;">Alıcı Mesajı</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="border-t border-slate-800 pt-4 flex gap-2">
+                <button onclick="saveAdvancedSettings()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-2xl text-xs transition-colors shadow-lg shadow-blue-600/15">Değişiklikleri Kaydet</button>
+                <button onclick="closeSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-6 rounded-2xl text-xs transition-colors">Vazgeç</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL: SADECE ARKA PLAN DUVAR KAĞIDI SEÇİMİ -->
     <div id="wallpaperModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
         <div class="bg-[#0f172a] border border-slate-800 p-6 rounded-[2rem] w-full max-w-md shadow-2xl">
             <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
-                <h3 class="text-base font-bold text-white"><i class="fa-solid fa-palette text-blue-500 mr-2"></i> Sohbet Teması</h3>
+                <h3 class="text-base font-bold text-white"><i class="fa-solid fa-palette text-blue-500 mr-2"></i> Sohbet Duvar Kağıdı</h3>
                 <button onclick="closeWallpaperModal()" class="text-slate-400 hover:text-white"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <label class="block text-xs font-semibold text-slate-400 mb-2">Düz Renkler</label>
@@ -234,6 +336,14 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // Hazır Tema Veritabanı
+        const themePresets = {
+            sapphire: { bg: "#070b19", sidebar: "#090e1c", sender: "#2563eb", receiver: "#1e293b", primary: "#3b82f6", hover: "#2563eb" },
+            emerald: { bg: "#041410", sidebar: "#061f19", sender: "#059669", receiver: "#112620", primary: "#10b981", hover: "#059669" },
+            monochrome: { bg: "#0c0d0f", sidebar: "#13151a", sender: "#374151", receiver: "#1f2937", primary: "#4b5563", hover: "#374151" },
+            purple: { bg: "#0a0514", sidebar: "#110921", sender: "#7c3aed", receiver: "#1c1133", primary: "#8b5cf6", hover: "#7c3aed" }
+        };
+
         // Durum Değişkenleri
         let currentUser = null;
         let activeChatId = null;
@@ -242,7 +352,8 @@
         let unsubMessages = null;
         let unsubStatus = null;
         let typingTimeout = null;
-        let currentMobileView = 'list'; // 'list' veya 'chat' (mobil ekran kontrolü)
+        let currentMobileView = 'list'; 
+        let selectedPreviewTheme = "sapphire";
 
         // Biyometri Dönüştürücüler
         function bufferToBase64(buffer) {
@@ -263,7 +374,7 @@
             return bytes.buffer;
         }
 
-        // --- ENTEGRE HATA YÖNETİMİ & DOĞRUDAN GİRİŞ SİSTEMİ ---
+        // --- ENTEGRE HATA YÖNETİMİ VE DOĞRUDAN GİRİŞ SİSTEMİ ---
         async function handleLogin() {
             const usernameInput = document.getElementById("usernameInput");
             const pinInput = document.getElementById("pinInput");
@@ -275,7 +386,6 @@
             const pinError = document.getElementById("pinError");
             const generalError = document.getElementById("generalLoginError");
 
-            // Hataları temizle
             usernameError.classList.add("hidden");
             pinError.classList.add("hidden");
             generalError.classList.add("hidden");
@@ -305,7 +415,7 @@
                         const credentials = userData.credentials || [];
                         
                         if (credentials.length > 0) {
-                            // HESAPTA PARMAK İZİ TANIMLI: Hiç ara pencere göstermeden DOĞRUDAN biyometriyi aç!
+                            // HESAPTA PARMAK İZİ TANIMLI: DOĞRUDAN biyometriyi aç!
                             const authSuccess = await verifyBiometricLogin(username, credentials);
                             if (authSuccess) {
                                 successfulLogin(username, userData);
@@ -314,7 +424,6 @@
                                 generalError.classList.remove("hidden");
                             }
                         } else {
-                            // Parmak izi yok (İlk Giriş)
                             successfulLogin(username, userData);
                         }
                     } else {
@@ -337,7 +446,6 @@
             }
         }
 
-        // Parmak İzini Doğrulayan Fonksiyon
         async function verifyBiometricLogin(username, credentials) {
             if (!window.PublicKeyCredential) {
                 document.getElementById("generalLoginError").innerText = "Cihazınız parmak izi okumayı desteklemiyor.";
@@ -371,7 +479,6 @@
             }
         }
 
-        // Hesap Başvurusu Gönderme
         async function createMembershipRequest() {
             const username = document.getElementById("usernameInput").value.trim().toLowerCase();
             const pin = document.getElementById("pinInput").value.trim();
@@ -404,7 +511,6 @@
             document.getElementById("requestModal").classList.add("hidden");
         }
 
-        // Başarılı Oturum Açılması
         async function successfulLogin(username, userData) {
             currentUser = username;
             const credentials = userData.credentials || [];
@@ -415,12 +521,18 @@
                 document.getElementById("lockScreen").classList.add("hidden");
             }
 
-            document.getElementById("myDisplayName").innerText = username.toUpperCase();
-            document.getElementById("myAvatar").innerText = username.substring(0, 2).toUpperCase();
+            // Görünen isim varsa onu bas, yoksa ham kullanıcı adını bas
+            const displayName = userData.displayName || username.toUpperCase();
+            document.getElementById("myDisplayName").innerText = displayName;
+            document.getElementById("myAvatar").innerText = displayName.substring(0, 2).toUpperCase();
             
             await db.collection("users").doc(currentUser).update({
                 status: "online"
             });
+
+            // Temayı LocalStorage'dan Çekip Uygula
+            const savedTheme = localStorage.getItem("chat_theme") || "sapphire";
+            applyThemeColors(savedTheme);
 
             initAppSettings();
             loadActiveChatsList();
@@ -437,7 +549,7 @@
             }
 
             if (window.location.protocol !== "https:" && window.location.hostname !== "localhost" && window.location.hostname !== "127.0.0.1") {
-                alert("Güvenlik nedeniyle parmak izi tanımlaması sadece HTTPS veya localhost üzerinde çalışır.");
+                alert("Tarayıcı güvenliği nedeniyle parmak izi tanımlaması sadece HTTPS veya localhost üzerinde çalışır.");
                 return;
             }
 
@@ -488,36 +600,155 @@
             }
         }
 
+        // Parmak İzi Kaydetme (Ayarlar Menüsünden)
+        async function registerBiometric() {
+            if (!currentUser) return;
+            try {
+                const randomChallenge = new Uint8Array(32);
+                window.crypto.getRandomValues(randomChallenge);
+                const userId = new Uint8Array(16);
+                window.crypto.getRandomValues(userId);
+                const rpId = window.location.hostname || undefined;
+
+                const publicKeyCredentialCreationOptions = {
+                    challenge: randomChallenge,
+                    rp: { name: "BlueChat", ...(rpId ? { id: rpId } : {}) },
+                    user: { id: userId, name: `${currentUser}@bluechat.com`, displayName: currentUser.toUpperCase() },
+                    pubKeyCredParams: [{ alg: -7, type: "public-key" }, { alg: -257, type: "public-key" }],
+                    authenticatorSelection: { authenticatorAttachment: "platform", userVerification: "required" },
+                    timeout: 60000,
+                    attestation: "none"
+                };
+
+                const credential = await navigator.credentials.create({
+                    publicKey: publicKeyCredentialCreationOptions
+                });
+                
+                const credentialIdBase64 = bufferToBase64(credential.rawId);
+                await db.collection("users").doc(currentUser).update({
+                    credentials: firebase.firestore.FieldValue.arrayUnion({ id: credentialIdBase64 })
+                });
+
+                alert("Yeni parmak izi tanımlandı!");
+            } catch (err) {
+                console.error(err);
+                alert("Parmak izi tanımlanamadı.");
+            }
+        }
+
+        // --- GELİŞMİŞ TEMA VE AYARLAR YÖNETİMİ ---
+
+        // Tema Önizleme Fonksiyonu (Ayarlar modalında anlık gösterir)
+        function previewTheme(themeName) {
+            selectedPreviewTheme = themeName;
+            const theme = themePresets[themeName];
+            
+            const box = document.getElementById("themePreviewBox");
+            const sender = document.getElementById("previewSenderBubble");
+            const receiver = document.getElementById("previewReceiverBubble");
+
+            box.style.backgroundColor = theme.bg;
+            sender.style.backgroundColor = theme.sender;
+            receiver.style.backgroundColor = theme.receiver;
+        }
+
+        // Temayı Uygula (CSS Custom Properties Günceller)
+        function applyThemeColors(themeName) {
+            const theme = themePresets[themeName] || themePresets.sapphire;
+            
+            document.documentElement.style.setProperty('--theme-bg', theme.bg);
+            document.documentElement.style.setProperty('--theme-sidebar', theme.sidebar);
+            document.documentElement.style.setProperty('--theme-sender-bg', theme.sender);
+            document.documentElement.style.setProperty('--theme-receiver-bg', theme.receiver);
+            document.documentElement.style.setProperty('--theme-primary', theme.primary);
+            document.documentElement.style.setProperty('--theme-primary-hover', theme.hover);
+
+            localStorage.setItem("chat_theme", themeName);
+        }
+
+        // Gelişmiş Ayarları Kaydetme (Görünen İsim, PIN ve Tema)
+        async function saveAdvancedSettings() {
+            if (!currentUser) return;
+
+            const dispInput = document.getElementById("settingsDisplayNameInput").value.trim();
+            const pinInput = document.getElementById("settingsPinInput").value.trim();
+
+            const updates = {};
+            
+            if (dispInput) {
+                updates.displayName = dispInput;
+                document.getElementById("myDisplayName").innerText = dispInput;
+                document.getElementById("myAvatar").innerText = dispInput.substring(0, 2).toUpperCase();
+            }
+
+            if (pinInput) {
+                if (pinInput.length < 4) {
+                    alert("Yeni PIN en az 4 haneli olmalıdır.");
+                    return;
+                }
+                updates.pin = pinInput;
+            }
+
+            try {
+                if (Object.keys(updates).length > 0) {
+                    await db.collection("users").doc(currentUser).update(updates);
+                }
+                
+                // Temayı kaydet
+                applyThemeColors(selectedPreviewTheme);
+
+                closeSettingsModal();
+                alert("Ayarlarınız başarıyla güncellendi!");
+            } catch (err) {
+                alert("Kaydetme hatası: " + err.message);
+            }
+        }
+
+        function openSettingsModal() {
+            document.getElementById("settingsModal").classList.remove("hidden");
+            // Mevcut verileri modal alanına bas
+            db.collection("users").doc(currentUser).get().then(doc => {
+                if (doc.exists) {
+                    const data = doc.data();
+                    document.getElementById("settingsDisplayNameInput").value = data.displayName || "";
+                }
+            });
+            // Varsayılan tema önizlemesini çalıştır
+            const savedTheme = localStorage.getItem("chat_theme") || "sapphire";
+            previewTheme(savedTheme);
+        }
+
+        function closeSettingsModal() {
+            document.getElementById("settingsModal").classList.add("hidden");
+        }
+
         // --- SOHBET YÖNETİMİ & RESPONSIVE AKIŞ ---
 
-        // Mobil Geri Tuşu Mantığı
         function goBackToList() {
             currentMobileView = 'list';
             updateMobileLayout();
+            
+            // Çıkarken yazıyor durumunu kapat
+            setTypingStatus(false);
         }
 
-        // Ekran Düzenini Güncelleme (Mobil / Desktop Ayrımı)
         function updateMobileLayout() {
             const sidebar = document.getElementById("sidebar");
             const chatContainer = document.getElementById("activeChatContainer");
             const welcomeScreen = document.getElementById("welcomeScreen");
 
             if (window.innerWidth < 768) {
-                // Mobil Ekran
-                welcomeScreen.classList.add("hidden"); // Mobilde boş ekranı gösterme
+                welcomeScreen.classList.add("hidden");
                 if (currentMobileView === 'list') {
-                    sidebar.classList.remove("hidden");
-                    sidebar.classList.add("w-full");
-                    chatContainer.classList.add("hidden");
+                    sidebar.style.transform = "translateX(0)";
+                    chatContainer.style.transform = "translateX(100%)";
                 } else {
-                    sidebar.classList.add("hidden");
-                    chatContainer.classList.remove("hidden");
-                    chatContainer.classList.add("w-full");
+                    sidebar.style.transform = "translateX(-100%)";
+                    chatContainer.style.transform = "translateX(0)";
                 }
             } else {
-                // Masaüstü Ekranı
-                sidebar.classList.remove("hidden", "w-full");
-                sidebar.classList.add("w-80", "lg:w-96");
+                sidebar.style.transform = "none";
+                chatContainer.style.transform = "none";
                 
                 if (activeChatId) {
                     chatContainer.classList.remove("hidden");
@@ -554,7 +785,11 @@
                         chatId: chatId,
                         users: sorted,
                         typing: { [currentUser]: false, [targetUser]: false },
-                        lastMessageTime: Date.now()
+                        lastMessageTime: Date.now(),
+                        lastMessageText: "Sohbet başlatıldı",
+                        lastMessageSender: currentUser,
+                        lastMessageStatus: "sent",
+                        unreadCounts: { [currentUser]: 0, [targetUser]: 0 }
                     });
                 }
 
@@ -565,16 +800,26 @@
             }
         }
 
-        // Sohbet Odasını Seçme
-        function selectChatRoom(chatId, targetUserDoc) {
+        // Sohbet Odasını Seçme ve Okunmamışları Sıfırlama
+        async function selectChatRoom(chatId, targetUserDoc) {
             activeChatId = chatId;
             otherUser = targetUserDoc;
 
-            currentMobileView = 'chat'; // Mobil durumu sohbet görünümüne geçir
+            currentMobileView = 'chat'; 
             updateMobileLayout();
 
-            document.getElementById("activeChatName").innerText = targetUserDoc.toUpperCase();
-            document.getElementById("activeAvatar").innerText = targetUserDoc.substring(0, 2).toUpperCase();
+            // Sohbet açıldığında benim okunmamışlarımı sıfırla
+            await db.collection("chats").doc(chatId).update({
+                [`unreadCounts.${currentUser}`]: 0
+            });
+
+            // Karşı tarafın adını Firestore'dan çek (Görünen isim varsa onu kullan)
+            const otherUserSnap = await db.collection("users").doc(targetUserDoc).get();
+            const otherUserData = otherUserSnap.data() || {};
+            const otherDisplayName = otherUserData.displayName || targetUserDoc.toUpperCase();
+
+            document.getElementById("activeChatName").innerText = otherDisplayName;
+            document.getElementById("activeAvatar").innerText = otherDisplayName.substring(0, 2).toUpperCase();
 
             listenOtherUserStatus();
             listenMessages();
@@ -596,8 +841,13 @@
                 snapshot.forEach((doc) => {
                     const msg = doc.data();
                     const isMe = msg.sender === currentUser;
-                    const bgClass = isMe ? "bg-blue-600 text-white rounded-2xl rounded-tr-none ml-auto" : "bg-slate-800 text-slate-200 rounded-2xl rounded-tl-none";
                     
+                    // Gönderen ve Alıcı için Tema Değişkenli Bubble Stilleri
+                    const bgStyle = isMe 
+                        ? "background-color: var(--theme-sender-bg); color: #ffffff;" 
+                        : "background-color: var(--theme-receiver-bg); color: #f1f5f9;";
+                    const roundedStyle = isMe ? "rounded-tr-none" : "rounded-tl-none";
+
                     let ticks = "";
                     if (isMe) {
                         if (msg.status === "sent") {
@@ -607,6 +857,7 @@
                         }
                     }
 
+                    // Mesaj bana geldiyse ve "sent" durumundaysa "read" yap
                     if (!isMe && msg.status === "sent") {
                         batch.update(doc.ref, { status: "read" });
                         hasUpdates = true;
@@ -614,9 +865,10 @@
 
                     const timeStr = formatTime(msg.timestamp);
 
+                    // MOBİL İÇİN BELİRGİN ÇERÇEVE VE DIŞ KAPLAMA GÖLGESİ (shadow-lg, border border-white/5)
                     const msgHtml = `
                         <div class="flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'items-start'}">
-                            <div class="message-content px-4 py-2.5 rounded-2xl shadow-md ${bgClass}">
+                            <div class="message-content px-4 py-2.5 rounded-2xl ${roundedStyle} shadow-lg border border-white/5" style="${bgStyle}">
                                 <p class="text-[13px] leading-relaxed whitespace-pre-line">${msg.text}</p>
                                 <div class="flex items-center justify-end gap-1 mt-1 text-[8px] ${isMe ? 'text-blue-200' : 'text-slate-400'}">
                                     <span>${timeStr}</span>
@@ -628,8 +880,12 @@
                     container.insertAdjacentHTML("beforeend", msgHtml);
                 });
 
+                // Toplu okundu güncellemesini ana chat belgesinde de yap
                 if (hasUpdates) {
                     batch.commit().catch(err => console.error(err));
+                    db.collection("chats").doc(activeChatId).update({
+                        lastMessageStatus: "read"
+                    });
                 }
 
                 setTimeout(() => {
@@ -658,22 +914,31 @@
             });
         }
 
+        // Gelişmiş Mesaj Gönderme Mimarisi (Son mesaj önizleme ve okunmamış mesajları artırır)
         async function sendMessage() {
             const input = document.getElementById("messageInput");
             const text = input.value.trim();
             if (!text || !activeChatId) return;
 
+            const now = Date.now();
+
             try {
+                // 1. Mesajı Alt Koleksiyona Ekle
                 await db.collection("chats").doc(activeChatId).collection("messages").add({
                     sender: currentUser,
                     text: text,
-                    timestamp: Date.now(),
+                    timestamp: now,
                     status: "sent"
                 });
 
+                // 2. Ana Chat Belgesini Güncelle (Son mesaj, sıralama ve karşı tarafın okunmamış sayacı)
                 await db.collection("chats").doc(activeChatId).update({
-                    lastMessageTime: Date.now(),
-                    [`typing.${currentUser}`]: false
+                    lastMessageTime: now,
+                    lastMessageText: text,
+                    lastMessageSender: currentUser,
+                    lastMessageStatus: "sent",
+                    [`typing.${currentUser}`]: false,
+                    [`unreadCounts.${otherUser}`]: firebase.firestore.FieldValue.increment(1)
                 });
 
                 input.value = "";
@@ -702,9 +967,10 @@
             }, 2000);
         });
 
-        // Sohbet Listesini Yükleme ve Boş Durum Kontrolü (Ustam burada kimsecikler yok yazısı)
+        // Sohbet Listesini Yükleme (Son mesaja göre sıralama, unread sayacı ve akıllı tıklar)
         function loadActiveChatsList() {
-            db.collection("chats").onSnapshot((snapshot) => {
+            // chats koleksiyonunu "lastMessageTime" alanına göre azalan (büyükten küçüğe) şekilde sıralıyoruz
+            db.collection("chats").orderBy("lastMessageTime", "desc").onSnapshot((snapshot) => {
                 const listContainer = document.getElementById("chatList");
                 listContainer.innerHTML = "";
                 let hasChat = false;
@@ -714,18 +980,48 @@
                     if (chat.users.includes(currentUser)) {
                         hasChat = true;
                         const partner = chat.users.find(u => u !== currentUser);
-                        const isActive = chat.chatId === activeChatId ? "bg-blue-600/10 border-l-4 border-blue-500" : "hover:bg-slate-800/40";
+                        const lastMsgText = chat.lastMessageText || "Henüz mesaj yok";
+                        const lastSender = chat.lastMessageSender;
+                        const lastStatus = chat.lastMessageStatus;
+                        const unreadCount = (chat.unreadCounts && chat.unreadCounts[currentUser]) || 0;
 
+                        // Akıllı Tık Kontrolü
+                        let ticks = "";
+                        if (lastSender === currentUser) {
+                            if (lastStatus === "sent") {
+                                ticks = '<i class="fa-solid fa-check text-slate-500 text-[10px] mr-1"></i>';
+                            } else if (lastStatus === "read") {
+                                ticks = '<i class="fa-solid fa-check-double text-blue-400 text-[10px] mr-1"></i>';
+                            }
+                        }
+
+                        // Okunmamış Mesaj Gösterimi ve Kart Arka Plan Vurgusu
+                        let unreadBadge = "";
+                        let itemBg = "hover:bg-slate-800/30";
+                        if (unreadCount > 0) {
+                            unreadBadge = `<span class="w-5 h-5 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce shadow-md shadow-blue-500/20">${unreadCount}</span>`;
+                            itemBg = "bg-blue-600/5 hover:bg-blue-600/10 border-l-4 border-blue-500"; 
+                        } else if (chat.chatId === activeChatId) {
+                            itemBg = "bg-slate-800/60 border-l-4 border-slate-500";
+                        }
+
+                        // Karşı tarafın adını/görünen ismini getirmek için asenkron yapı yerine sade isim eşleştirmesi
                         const chatHtml = `
-                            <div id="item_${chat.chatId}" class="flex items-center gap-3 p-4 border-b border-slate-900/30 cursor-pointer transition-all ${isActive}">
-                                <div class="w-11 h-11 bg-[#1e293b] text-slate-300 font-bold rounded-2xl flex items-center justify-center text-sm shadow">
+                            <div id="item_${chat.chatId}" class="flex items-center gap-3 p-4 border-b border-slate-900/30 cursor-pointer transition-all ${itemBg}">
+                                <div class="w-11 h-11 bg-[#131a26] text-slate-300 font-bold rounded-2xl flex items-center justify-center text-sm shadow">
                                     ${partner.substring(0,2).toUpperCase()}
                                 </div>
                                 <div class="flex-1 min-w-0">
                                     <div class="flex justify-between items-baseline mb-0.5">
                                         <h4 class="font-bold text-xs text-slate-200 truncate">${partner.toUpperCase()}</h4>
+                                        <span class="text-[9px] text-slate-500 font-semibold">${chat.lastMessageTime ? formatTime(chat.lastMessageTime) : ""}</span>
                                     </div>
-                                    <p class="text-[10px] text-slate-400 truncate font-medium">Sohbete devam etmek için dokunun</p>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-[11px] text-slate-400 truncate font-medium flex items-center">
+                                            ${ticks} ${lastMsgText}
+                                        </p>
+                                        ${unreadBadge}
+                                    </div>
                                 </div>
                             </div>
                         `;
@@ -737,7 +1033,6 @@
                     }
                 });
 
-                // EĞER KİMSE YOKSA BURADA KİMSECİKLER YOK KUTUSU (Zarif Dizayn)
                 if (!hasChat) {
                     listContainer.innerHTML = `
                         <div class="flex flex-col items-center justify-center text-center p-8 mt-12 space-y-3">
@@ -753,7 +1048,7 @@
         }
 
 
-        // --- AYARLAR VE SES ---
+        // --- DUVAR KAĞIDI VE AYARLAR ---
         function initAppSettings() {
             const savedBg = localStorage.getItem("chat_background");
             if (savedBg) {
@@ -820,12 +1115,17 @@
         window.handleLogin = handleLogin;
         window.createMembershipRequest = createMembershipRequest;
         window.registerMandatoryBiometric = registerMandatoryBiometric;
+        window.registerBiometric = registerBiometric;
         window.startNewChat = startNewChat;
         window.sendMessage = sendMessage;
         window.togglePrivacyMode = togglePrivacyMode;
         window.logout = logout;
         window.closeRequestModal = closeRequestModal;
         window.goBackToList = goBackToList;
+        window.openSettingsModal = openSettingsModal;
+        window.closeSettingsModal = closeSettingsModal;
+        window.saveAdvancedSettings = saveAdvancedSettings;
+        window.previewTheme = previewTheme;
 
         window.openWallpaperModal = () => document.getElementById("wallpaperModal").classList.remove("hidden");
         window.closeWallpaperModal = () => document.getElementById("wallpaperModal").classList.add("hidden");
