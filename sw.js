@@ -6,7 +6,7 @@ self.addEventListener('push', function(event) {
 
     if (event.data) {
         try {
-            payload = event.data.json();
+            payload = event.data.json(); 
         } catch (e) {
             payload = { title: "BlueChat", body: event.data.text() };
         }
