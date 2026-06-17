@@ -2,13 +2,12 @@
 <html lang="tr">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>BlueChat - Güvenli ve Akıcı Mesajlaşma</title>
     <!-- Tailwind CSS CDN -->
     <script src="https://cdn.tailwindcss.com"></script>
     <!-- FontAwesome Icons CDN -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <link rel="manifest" href="manifest.json">
     
     <!-- YEREL DOSYALARDA ENGELSİZ ÇALIŞAN KLASİK FIREBASE SDK KÜTÜPHANELERİ -->
     <script src="https://www.gstatic.com/firebasejs/10.12.0/firebase-app-compat.js"></script>
@@ -47,6 +46,7 @@
             transform: translateZ(0); /* Donanım Hızlandırması */
         }
 
+        /* Mesaj Balonlarının Parlama Efekti */
         .highlight-message {
             animation: pulse-ring 1.5s ease-out;
         }
@@ -59,7 +59,7 @@
 </head>
 <body class="text-slate-100 font-sans h-[100dvh] flex flex-col justify-between select-none">
 
-    <!-- GİRİŞ EKRANI -->
+    <!-- GİRİŞ EKRANI (LOCK SCREEN) -->
     <div id="lockScreen" class="fixed inset-0 bg-[#070b19] z-50 flex flex-col items-center justify-center p-4">
         <div class="bg-[#0f172a] border border-blue-500/20 p-8 rounded-[2rem] w-full max-w-md text-center shadow-2xl shadow-blue-500/5 transition-transform duration-300">
             <div class="w-16 h-16 bg-blue-600/10 border border-blue-500/30 text-blue-400 rounded-2xl flex items-center justify-center mx-auto mb-6 text-2xl shadow-inner">
@@ -75,13 +75,13 @@
             
             <div class="space-y-4 text-left" id="loginFormFields">
                 <div>
-                    <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-white focus:outline-none focus:border-blue-500 text-sm transition-all duration-300">
+                    <input type="text" id="usernameInput" placeholder="Kullanıcı Adı" autocomplete="username" autocapitalize="none" spellcheck="false" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-white focus:outline-none focus:border-blue-500 text-sm transition-all duration-300">
                     <p id="usernameError" class="text-red-400 text-[11px] mt-1.5 ml-2 hidden"></p>
                 </div>
                 
                 <div class="relative">
-                    <input type="password" id="pinInput" placeholder="Şifre PIN Kodu" maxlength="6" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-center text-white tracking-widest focus:outline-none focus:border-blue-500 text-sm transition-all duration-300">
-                    <button id="togglePinBtn" type="button" class="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors duration-200">
+                    <input type="password" id="pinInput" placeholder="Şifre PIN Kodu" maxlength="6" inputmode="numeric" autocomplete="current-password" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-center text-white tracking-widest focus:outline-none focus:border-blue-500 text-sm transition-all duration-300">
+                    <button onclick="togglePinVisibility()" type="button" class="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors duration-200">
                         <i id="eyeIcon" class="fa-solid fa-eye text-sm"></i>
                     </button>
                     <p id="pinError" class="text-red-400 text-[11px] mt-1.5 ml-2 hidden"></p>
@@ -94,14 +94,14 @@
 
                 <p id="generalLoginError" class="text-red-400 text-xs text-center font-medium hidden"></p>
                 
-                <button id="loginBtn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 shadow-lg shadow-blue-600/15">
+                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 shadow-lg shadow-blue-600/15">
                     Giriş Yap
                 </button>
             </div>
         </div>
     </div>
 
-    <!-- ZORUNLU BIYOMETRI MODALI -->
+    <!-- İLK GİRİŞ İÇİN ZORUNLU PARMAK İZİ KAYIT MODAL PENCERESİ -->
     <div id="mandatoryBiometricModal" class="hidden fixed inset-0 bg-[#070b19]/95 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-[#0f172a] border border-blue-500/30 p-8 rounded-[2.5rem] w-full max-w-md text-center shadow-2xl">
             <div class="w-20 h-20 bg-blue-600/10 border border-blue-500/20 text-blue-400 rounded-full flex items-center justify-center mx-auto mb-6 text-3xl animate-pulse">
@@ -111,13 +111,13 @@
             <p class="text-slate-400 text-xs mb-6 leading-relaxed">
                 Hesabınız onaylandı! Güvenliğiniz için **ilk girişte parmak izinizi kaydetmeniz zorunludur.** Şifreniz çalınsa dahi parmağınız olmadan kimse bu hesaba giremez.
             </p>
-            <button id="mandatoryBioBtn" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
+            <button onclick="registerMandatoryBiometric()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
                 <i class="fa-solid fa-key"></i> Parmak İzimi Şimdi Tanımla
             </button>
         </div>
     </div>
 
-    <!-- TALEP MODALI -->
+    <!-- HESAP BULUNAMADI & TALEP MODAL PENCERESİ -->
     <div id="requestModal" class="hidden fixed inset-0 bg-black/80 backdrop-blur-md z-50 flex items-center justify-center p-4">
         <div class="bg-[#0f172a] border border-amber-500/20 p-6 rounded-[2rem] w-full max-w-sm text-center shadow-2xl">
             <div class="w-14 h-14 bg-amber-500/10 border border-amber-500/20 text-amber-500 rounded-full flex items-center justify-center mx-auto mb-4 text-xl">
@@ -127,10 +127,10 @@
             <p class="text-slate-400 text-xs mb-4">Girdiğiniz kullanıcı adına ait aktif bir hesap bulunamadı. Bu kullanıcı adıyla bir <span class="text-amber-400 font-semibold">üyelik talebi</span> oluşturmak ister misiniz?</p>
             
             <div class="space-y-3">
-                <button id="requestApproveBtn" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-2xl text-xs transition-colors shadow-lg shadow-amber-500/10">
+                <button onclick="createMembershipRequest()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-2xl text-xs transition-colors shadow-lg shadow-amber-500/10">
                     Evet, Üyelik Talebi Gönder
                 </button>
-                <button id="requestCloseBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-2xl text-xs transition-colors">
+                <button onclick="closeRequestModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-2xl text-xs transition-colors">
                     Vazgeç
                 </button>
             </div>
@@ -140,8 +140,9 @@
     <!-- ANA PANEL -->
     <div class="flex h-full w-full relative overflow-hidden">
         
-        <!-- SOHBET LİSTESİ -->
+        <!-- SOL PANEL: SOHBET LİSTESİ -->
         <div id="sidebar" class="slide-panel absolute md:relative left-0 top-0 h-full w-full md:w-80 lg:w-96 theme-sidebar border-r border-slate-900/60 flex flex-col z-20 transform translate-x-0">
+            <!-- Profil ve Hızlı Araçlar -->
             <div class="p-4 theme-app flex justify-between items-center border-b border-slate-900/60">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 theme-btn rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-md shadow-blue-500/10" id="myAvatar">
@@ -155,36 +156,40 @@
                     </div>
                 </div>
                 <div class="flex gap-4 text-slate-400">
-                    <button id="sidebarSettingsBtn" title="Ayarlar" class="hover:text-blue-500 transition-colors">
+                    <button onclick="openSettingsModal()" title="Ayarlar" class="hover:text-blue-500 transition-colors">
                         <i class="fa-solid fa-gear text-base"></i>
                     </button>
-                    <button id="sidebarLogoutBtn" title="Çıkış Yap" class="hover:text-red-500 transition-colors">
+                    <button onclick="logout()" title="Çıkış Yap" class="hover:text-red-500 transition-colors">
                         <i class="fa-solid fa-power-off text-base"></i>
                     </button>
                 </div>
             </div>
 
+            <!-- Kullanıcı Arama -->
             <div class="p-3 theme-app border-b border-slate-900/50">
                 <div class="flex gap-2">
-                    <input type="text" id="searchUserField" placeholder="Kullanıcı adı ara..." class="flex-1 bg-[#131b2e] text-slate-200 px-4 py-2.5 rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
-                    <button id="startChatBtn" class="theme-btn text-white px-4 py-2.5 rounded-2xl text-xs font-semibold transition-all shadow-md">Sohbet Aç</button>
+                    <input type="text" id="searchUserField" placeholder="Kullanıcı adı ara..." autocomplete="off" autocapitalize="none" spellcheck="false" class="flex-1 bg-[#131b2e] text-slate-200 px-4 py-2.5 rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
+                    <button onclick="startNewChat()" class="theme-btn text-white px-4 py-2.5 rounded-2xl text-xs font-semibold transition-all shadow-md">Sohbet Aç</button>
                 </div>
             </div>
 
-            <div class="flex-1 overflow-y-auto" id="chatList"></div>
+            <!-- Sohbet Listesi Container -->
+            <div class="flex-1 overflow-y-auto" id="chatList">
+            </div>
         </div>
 
-        <!-- SOHBET PENCERESİ -->
+        <!-- SAĞ PANEL: SOHBET PENCERESİ -->
         <div id="activeChatContainer" class="slide-panel absolute md:relative right-0 top-0 h-full w-full md:flex-1 theme-app flex flex-col z-30 transform translate-x-full md:translate-x-0">
+            <!-- Sohbet Header -->
             <div class="p-4 theme-sidebar flex justify-between items-center border-b border-slate-900/60 shrink-0 h-16">
                 <div class="flex items-center gap-3">
-                    <button id="chatBackBtn" class="md:hidden text-slate-400 hover:text-white mr-1 transition-colors">
+                    <button onclick="goBackToList()" class="md:hidden text-slate-400 hover:text-white mr-1 transition-colors">
                         <i class="fa-solid fa-chevron-left text-lg"></i>
                     </button>
                     <div id="activeAvatar" class="w-10 h-10 theme-btn rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-md">
                         -
                     </div>
-                    <div id="chatHeaderTitle" class="cursor-pointer">
+                    <div class="cursor-pointer" onclick="toggleChatActionsMenu()">
                         <h3 id="activeChatName" class="font-bold text-white text-sm tracking-tight flex items-center gap-1.5">
                             <span>-</span> <i class="fa-solid fa-caret-down text-[10px] text-slate-400"></i>
                         </h3>
@@ -192,42 +197,44 @@
                     </div>
                 </div>
                 <div class="flex gap-4 text-slate-400">
-                    <button id="openWallpaperBtn" title="Arka Plan Değiştir" class="hover:text-blue-500 transition-colors">
+                    <button onclick="openWallpaperModal()" title="Arka Plan Değiştir" class="hover:text-blue-500 transition-colors">
                         <i class="fa-solid fa-circle-half-stroke text-sm"></i>
                     </button>
                 </div>
             </div>
 
-            <!-- Sohbet Yönetim Açılır Menü -->
+            <!-- Üst İsim Tıklama Menüsü -->
             <div id="chatActionsMenu" class="hidden absolute top-16 left-4 bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow-2xl z-40 w-48 animate-fade-in">
-                <button id="clearChatBtn" class="w-full text-left text-red-400 hover:bg-red-500/10 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors">
+                <button onclick="deleteChatForMe()" class="w-full text-left text-red-400 hover:bg-red-500/10 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-trash-can"></i> Sohbeti Temizle (Sil)
                 </button>
             </div>
 
             <!-- Mesaj Listesi -->
             <div id="chatBackground" class="flex-1 overflow-y-auto p-4 flex flex-col justify-end bg-cover bg-center transition-all relative">
-                <div id="messageContainer" class="space-y-3 overflow-y-auto pr-1"></div>
+                <div id="messageContainer" class="space-y-3 overflow-y-auto pr-1">
+                </div>
             </div>
 
-            <!-- YANIT VERME ÖNİZLEME -->
+            <!-- ZARİF YANIT VERME ÖNİZLEME ALANI -->
             <div id="replyPreviewBar" class="hidden px-5 py-3 bg-[#0c1224] border-t border-slate-900 flex items-center justify-between shrink-0 rounded-t-2xl animate-fade-in">
                 <div class="border-l-2 border-blue-500 pl-3 min-w-0">
                     <span id="replyPreviewUser" class="text-[10px] text-blue-400 font-bold block">@AHMET</span>
                     <span id="replyPreviewText" class="text-xs text-slate-400 truncate max-w-xs block">Alıntılanan mesaj</span>
                 </div>
-                <button id="cancelReplyBtn" class="text-slate-400 hover:text-white p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
+                <button onclick="cancelReply()" class="text-slate-400 hover:text-white p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
-            <!-- Giriş Alanı -->
+            <!-- Sabit Mesaj Giriş Alanı -->
             <div class="p-4 theme-sidebar border-t border-slate-900/60 flex items-center gap-3 shrink-0">
-                <input type="text" id="messageInput" placeholder="Bir mesaj yazın..." class="flex-1 bg-[#131b2e] text-slate-100 px-5 py-3.5 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm transition-all">
-                <button id="sendMsgBtn" class="w-12 h-12 theme-btn active:scale-95 text-white rounded-2xl flex items-center justify-center transition-all shadow-md">
+                <input type="text" id="messageInput" onkeypress="handleKeyPress(event)" placeholder="Bir mesaj yazın..." class="flex-1 bg-[#131b2e] text-slate-100 px-5 py-3.5 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm transition-all">
+                <button onclick="sendMessage()" class="w-12 h-12 theme-btn active:scale-95 text-white rounded-2xl flex items-center justify-center transition-all shadow-md">
                     <i class="fa-solid fa-paper-plane text-sm pl-0.5"></i>
                 </button>
             </div>
         </div>
 
+        <!-- BOŞ EKRAN -->
         <div class="flex-1 hidden md:flex flex-col items-center justify-center theme-app text-slate-500 z-10" id="welcomeScreen">
             <div class="text-center space-y-4">
                 <div class="w-20 h-20 bg-blue-600/5 border border-blue-500/10 text-blue-500/80 rounded-[2rem] flex items-center justify-center mx-auto text-3xl shadow-xl">
@@ -239,48 +246,48 @@
         </div>
     </div>
 
-    <!-- AYARLAR MODALI -->
+    <!-- MODAL: AYARLAR PANELİ -->
     <div id="settingsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-md z-40 flex items-center justify-center p-4">
         <div class="bg-[#0f172a] border border-slate-800 p-6 rounded-[2.5rem] w-full max-w-lg shadow-2xl flex flex-col gap-6 animate-fade-in">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="text-base font-bold text-white"><i class="fa-solid fa-user-gear text-blue-500 mr-2"></i> Hesap Ayarları & Tema</h3>
-                <button id="settingsCloseIconBtn" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <!-- Profil Bilgileri -->
+                <!-- Profil Düzenleme -->
                 <div class="space-y-4">
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Kullanıcı Profil Bilgisi</h4>
                     
                     <div>
                         <label class="block text-[10px] text-slate-500 mb-1 font-semibold">Benzersiz Kullanıcı Adınız</label>
-                        <input type="text" id="settingsUsernameInput" placeholder="Yeni Kullanıcı Adı" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                        <input type="text" id="settingsUsernameInput" placeholder="Yeni Kullanıcı Adı" autocomplete="username" autocapitalize="none" spellcheck="false" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
                         <p id="usernameChangeError" class="text-red-400 text-[10px] mt-1 hidden"></p>
                     </div>
 
                     <div>
                         <label class="block text-[10px] text-slate-500 mb-1 font-semibold">Giriş PIN Şifresi</label>
-                        <input type="password" id="settingsPinInput" placeholder="Değiştirmek istemiyorsanız boş bırakın" maxlength="6" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                        <input type="password" id="settingsPinInput" placeholder="Değiştirmek istemiyorsanız boş bırakın" maxlength="6" inputmode="numeric" autocomplete="new-password" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
                     </div>
 
                     <div>
-                        <button id="settingsBioRegBtn" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors">
+                        <button onclick="registerBiometric()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors">
                             <i class="fa-solid fa-fingerprint text-blue-400"></i> Yeni Parmak İzi Tanımla
                         </button>
                     </div>
                 </div>
 
-                <!-- Tema Seçimi -->
+                <!-- Önizlemeli Tema Seçimi -->
                 <div class="space-y-4 flex flex-col justify-between">
                     <div>
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tema Şablonu Seçin</h4>
-                        <div class="grid grid-cols-2 gap-2" id="themeButtonsGrid">
-                            <button data-theme="sapphire" class="p-2.5 bg-[#0b1120] border border-blue-500/20 rounded-xl text-xs font-semibold text-blue-400 text-center hover:border-blue-500 transition-colors">Safir Gecesi</button>
-                            <button data-theme="emerald" class="p-2.5 bg-[#041c15] border border-emerald-500/20 rounded-xl text-xs font-semibold text-emerald-400 text-center hover:border-emerald-500 transition-colors">Zümrüt Ormanı</button>
-                            <button data-theme="monochrome" class="p-2.5 bg-[#0e0f11] border border-slate-700 rounded-xl text-xs font-semibold text-slate-300 text-center hover:border-slate-500 transition-colors">Kömür Grisi</button>
-                            <button data-theme="purple" class="p-2.5 bg-[#120924] border border-purple-500/20 rounded-xl text-xs font-semibold text-purple-400 text-center hover:border-purple-500 transition-colors">Asil Mor</button>
-                            <button data-theme="sakura" class="p-2.5 bg-[#1a080f] border border-rose-500/20 rounded-xl text-xs font-semibold text-rose-400 text-center hover:border-rose-500 transition-colors">Kiraz Pembesi</button>
-                            <button data-theme="amber" class="p-2.5 bg-[#170e03] border border-amber-500/20 rounded-xl text-xs font-semibold text-amber-400 text-center hover:border-amber-500 transition-colors">Kehribar Sarısı</button>
+                        <div class="grid grid-cols-2 gap-2">
+                            <button onclick="previewTheme('sapphire')" class="p-2.5 bg-[#0b1120] border border-blue-500/20 rounded-xl text-xs font-semibold text-blue-400 text-center hover:border-blue-500 transition-colors">Safir Gecesi</button>
+                            <button onclick="previewTheme('emerald')" class="p-2.5 bg-[#041c15] border border-emerald-500/20 rounded-xl text-xs font-semibold text-emerald-400 text-center hover:border-emerald-500 transition-colors">Zümrüt Ormanı</button>
+                            <button onclick="previewTheme('monochrome')" class="p-2.5 bg-[#0e0f11] border border-slate-700 rounded-xl text-xs font-semibold text-slate-300 text-center hover:border-slate-500 transition-colors">Kömür Grisi</button>
+                            <button onclick="previewTheme('purple')" class="p-2.5 bg-[#120924] border border-purple-500/20 rounded-xl text-xs font-semibold text-purple-400 text-center hover:border-purple-500 transition-colors">Asil Mor</button>
+                            <button onclick="previewTheme('sakura')" class="p-2.5 bg-[#1a080f] border border-rose-500/20 rounded-xl text-xs font-semibold text-rose-400 text-center hover:border-rose-500 transition-colors">Kiraz Pembesi</button>
+                            <button onclick="previewTheme('amber')" class="p-2.5 bg-[#170e03] border border-amber-500/20 rounded-xl text-xs font-semibold text-amber-400 text-center hover:border-amber-500 transition-colors">Kehribar Sarısı</button>
                         </div>
                     </div>
 
@@ -295,8 +302,8 @@
             </div>
 
             <div class="border-t border-slate-800 pt-4 flex gap-2">
-                <button id="settingsSaveBtn" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-2xl text-xs transition-colors shadow-lg">Değişiklikleri Kaydet</button>
-                <button id="settingsCancelBtn" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-6 rounded-2xl text-xs transition-colors">Vazgeç</button>
+                <button onclick="saveAdvancedSettings()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-2xl text-xs transition-colors shadow-lg">Değişiklikleri Kaydet</button>
+                <button onclick="closeSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-6 rounded-2xl text-xs transition-colors">Vazgeç</button>
             </div>
         </div>
     </div>
@@ -306,22 +313,22 @@
         <div class="bg-[#0f172a] border border-slate-800 p-6 rounded-[2rem] w-full max-w-md shadow-2xl">
             <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                 <h3 class="text-base font-bold text-white"><i class="fa-solid fa-palette text-blue-500 mr-2"></i> Sohbet Duvar Kağıdı</h3>
-                <button id="wallpaperCloseBtn" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button onclick="closeWallpaperModal()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <label class="block text-xs font-semibold text-slate-400 mb-2">Düz Renkler</label>
-            <div class="grid grid-cols-5 gap-2 mb-4" id="wallpaperColorsGrid">
-                <div data-color="#070b19" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #070b19;"></div>
-                <div data-color="#111827" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #111827;"></div>
-                <div data-color="#0f172a" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #0f172a;"></div>
-                <div data-color="#1e1b4b" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #1e1b4b;"></div>
-                <div data-color="#030712" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #030712;"></div>
+            <div class="grid grid-cols-5 gap-2 mb-4">
+                <div onclick="changeBgColor('#070b19')" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #070b19;"></div>
+                <div onclick="changeBgColor('#111827')" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #111827;"></div>
+                <div onclick="changeBgColor('#0f172a')" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #0f172a;"></div>
+                <div onclick="changeBgColor('#1e1b4b')" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #1e1b4b;"></div>
+                <div onclick="changeBgColor('#030712')" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #030712;"></div>
             </div>
             <label class="block text-xs font-semibold text-slate-400 mb-2">Manzaralar</label>
-            <div class="grid grid-cols-4 gap-2" id="wallpaperImagesGrid">
-                <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=150&auto=format&fit=crop" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
-                <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=150&auto=format&fit=crop" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
-                <img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=150&auto=format&fit=crop" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
-                <img src="https://images.unsplash.com/photo-1557683316-973673baf926?w=150&auto=format&fit=crop" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
+            <div class="grid grid-cols-4 gap-2">
+                <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=150&auto=format&fit=crop" onclick="changeBgImage(this.src)" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
+                <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=150&auto=format&fit=crop" onclick="changeBgImage(this.src)" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
+                <img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=150&auto=format&fit=crop" onclick="changeBgImage(this.src)" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
+                <img src="https://images.unsplash.com/photo-1557683316-973673baf926?w=150&auto=format&fit=crop" onclick="changeBgImage(this.src)" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
             </div>
         </div>
     </div>
@@ -342,6 +349,113 @@
         firebase.initializeApp(firebaseConfig);
         const db = firebase.firestore();
 
+        // Shared safety helpers
+        const USERNAME_PATTERN = /^[a-z0-9_]{3,24}$/;
+        const PIN_PATTERN = /^\d{4,6}$/;
+        const ALLOWED_BACKGROUND_HOSTS = new Set(["images.unsplash.com"]);
+
+        function normalizeUsername(value) {
+            return String(value || "").trim().toLowerCase();
+        }
+
+        function isValidUsername(value) {
+            return USERNAME_PATTERN.test(value);
+        }
+
+        function isValidPin(value) {
+            return PIN_PATTERN.test(String(value || ""));
+        }
+
+        function escapeHtml(value) {
+            return String(value ?? "").replace(/[&<>"']/g, (char) => ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;"
+            }[char]));
+        }
+
+        function escapeAttr(value) {
+            return escapeHtml(value).replace(/`/g, "&#96;");
+        }
+
+        function sanitizeMessageText(value) {
+            return String(value ?? "").slice(0, 2000);
+        }
+
+        async function hashPin(username, pin) {
+            const data = new TextEncoder().encode(`${pin}:bluechat-pin-v2`);
+            const digest = await crypto.subtle.digest("SHA-256", data);
+            return Array.from(new Uint8Array(digest)).map(byte => byte.toString(16).padStart(2, "0")).join("");
+        }
+
+        async function verifyStoredPin(username, pin, userData) {
+            const pinHash = await hashPin(username, pin);
+            if (userData.pinHash && userData.pinHash === pinHash) return true;
+
+            // Legacy migration for old plaintext PIN records.
+            if (userData.pin && userData.pin === pin) {
+                try {
+                    await db.collection("users").doc(username).update({
+                        pinHash,
+                        pin: firebase.firestore.FieldValue.delete()
+                    });
+                } catch (err) {
+                    console.error("PIN migration failed:", err);
+                }
+                return true;
+            }
+
+            return false;
+        }
+
+        function isSafeHexColor(value) {
+            return /^#[0-9a-f]{6}$/i.test(String(value || ""));
+        }
+
+        function isAllowedBackgroundUrl(value) {
+            try {
+                const url = new URL(value);
+                return url.protocol === "https:" && ALLOWED_BACKGROUND_HOSTS.has(url.hostname);
+            } catch {
+                return false;
+            }
+        }
+
+        function applyChatBackground(value) {
+            const bg = document.getElementById("chatBackground");
+            if (!bg || !value) return false;
+
+            if (isSafeHexColor(value)) {
+                bg.style.backgroundColor = value;
+                bg.style.backgroundImage = "none";
+                return true;
+            }
+
+            if (isAllowedBackgroundUrl(value)) {
+                bg.style.backgroundImage = `url("${value}")`;
+                return true;
+            }
+
+            return false;
+        }
+
+        async function isPlatformBiometricAvailable() {
+            if (!window.PublicKeyCredential) return false;
+            if (typeof PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable !== "function") return true;
+            try {
+                return await PublicKeyCredential.isUserVerifyingPlatformAuthenticatorAvailable();
+            } catch {
+                return false;
+            }
+        }
+
+        function setElementText(id, value) {
+            const el = document.getElementById(id);
+            if (el) el.innerText = value;
+        }
+
         // Yerel Biyometri Helper Fonksiyonları
         function bufferToBase64(buffer) {
             return btoa(String.fromCharCode(...new Uint8Array(buffer)));
@@ -355,42 +469,6 @@
                 bytes[i] = binaryString.charCodeAt(i);
             }
             return bytes.buffer;
-        }
-
-        // Kriptografik PIN Hashleme (SHA-256) - Güvenlik Açığı Kapatıldı (Kritik 2, 3)
-        async function hashPin(pin) {
-            if (!pin) return "";
-            const encoder = new TextEncoder();
-            const data = encoder.encode(pin);
-            const hashBuffer = await crypto.subtle.digest('SHA-256', data);
-            const hashArray = Array.from(new Uint8Array(hashBuffer));
-            return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
-        }
-
-        // Güvenli XSS Temizleyici - Güvenlik Açığı Kapatıldı (Kritik 4, Öneri 6)
-        function escapeHTML(str) {
-            if (!str) return "";
-            return str.replace(/[&<>"']/g, function(m) {
-                switch (m) {
-                    case '&': return '&amp;';
-                    case '<': return '&lt;';
-                    case '>': return '&gt;';
-                    case '"': return '&quot;';
-                    case "'": return '&#039;';
-                    default: return m;
-                }
-            });
-        }
-
-        // Duvar Kağıdı Güvenli URL Doğrulayıcı - Güvenlik Açığı Kapatıldı (Orta 5)
-        function isValidWallpaperUrl(url) {
-            try {
-                const parsed = new URL(url);
-                return parsed.protocol === "https:" && 
-                       (parsed.hostname === "images.unsplash.com" || parsed.hostname === "cdnjs.cloudflare.com");
-            } catch (e) {
-                return false;
-            }
         }
 
         // Tema Şablonları
@@ -409,6 +487,7 @@
         let otherUser = null;
         let unsubMessages = null;
         let unsubStatus = null;
+        let unsubChatList = null;
         let typingTimeout = null;
         let currentMobileView = 'list'; 
         let selectedPreviewTheme = "sapphire";
@@ -421,8 +500,7 @@
         let audioCtx = null;
         let titleFlashInterval = null;
         const originalTitle = "BlueChat - Güvenli ve Akıcı Mesajlaşma";
-        let lastProcessedTimes = {}; 
-        let isInitialLoad = true; // Bildirim Yarış Koşulu Engeli (Orta 2)
+        let lastProcessedTimes = {}; // Mükerrer bildirim engeli için zaman takip haritası
 
         // Tarayıcı Ses Kartını Sentezleme Motoru (Sıfır Dosya Maliyetli Bip Sesi)
         function initAudioContext() {
@@ -479,8 +557,9 @@
         function startTitleFlash(sender) {
             if (titleFlashInterval) clearInterval(titleFlashInterval);
             let showAlt = false;
+            const safeSender = String(sender || "").toUpperCase().slice(0, 24);
             titleFlashInterval = setInterval(() => {
-                document.title = showAlt ? `@${sender.toUpperCase()} mesaj gönderdi!` : "✉️ Yeni Mesajınız Var!";
+                document.title = showAlt ? `@${safeSender} mesaj gönderdi!` : "Yeni mesajınız var!";
                 showAlt = !showAlt;
             }, 1200);
         }
@@ -508,8 +587,9 @@
         function showPushNotification(sender, text, chatId, partner) {
             if (!("Notification" in window)) return;
             if (Notification.permission === "granted") {
-                const notification = new Notification(`@${sender.toUpperCase()} - BlueChat`, {
-                    body: text,
+                const safeSender = String(sender || "").toUpperCase().slice(0, 24);
+                const notification = new Notification(`@${safeSender} - BlueChat`, {
+                    body: sanitizeMessageText(text).slice(0, 160),
                     tag: chatId || "generic_chat", // Aynı sohbete ait eski bildirimleri gruplar
                     icon: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/comments.svg"
                 });
@@ -539,28 +619,34 @@
         // Sayfa Yüklendiğinde Beni Hatırla Kontrolü ve Güvenli Tetikleyici
         window.addEventListener("DOMContentLoaded", () => {
             const rememberedUser = localStorage.getItem("remembered_user");
-            if (rememberedUser) {
+            if (rememberedUser && isValidUsername(rememberedUser)) {
                 document.getElementById("loginFormFields").classList.add("hidden");
                 document.getElementById("loginSubtitle").classList.add("hidden");
                 
                 const container = document.getElementById("autoLoginContainer");
                 const msg = document.getElementById("autoLoginMsg");
                 container.classList.remove("hidden");
-                
-                msg.innerHTML = `
-                    <span class="block mb-2">@${rememberedUser.toUpperCase()} hesabı algılandı.</span>
-                    <button id="autoBioBtn" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-xl font-bold transition-all shadow-md">
-                        <i class="fa-solid fa-fingerprint mr-1"></i> Dokun ve Giriş Yap
-                    </button>
-                `;
 
-                // Auto login butonuna dynamic event listener atama (Orta 4)
-                document.getElementById("autoBioBtn").addEventListener("click", () => {
-                    autoBiometricLogin(rememberedUser);
-                });
+                msg.textContent = "";
+                const detected = document.createElement("span");
+                detected.className = "block mb-2";
+                detected.innerText = `@${rememberedUser.toUpperCase()} hesabı algılandı.`;
+
+                const button = document.createElement("button");
+                button.type = "button";
+                button.className = "bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-xl font-bold transition-all shadow-md";
+                const icon = document.createElement("i");
+                icon.className = "fa-solid fa-fingerprint mr-1";
+                button.append(icon, document.createTextNode("Dokun ve Giriş Yap"));
+                button.addEventListener("click", () => autoBiometricLogin(rememberedUser));
+
+                msg.append(detected, button);
+            } else if (rememberedUser) {
+                localStorage.removeItem("remembered_user");
             }
         });
 
+        // ÇEVRİMİÇİ TAKİBİNİN ARKA PLANDA KORUNMASI (visibilitychange Çevrimdışı Sinyali Kaldırıldı!)
         function setOnlineOffline(status) {
             if (!currentUser) return;
             db.collection("users").doc(currentUser).update({
@@ -569,6 +655,22 @@
             });
         }
 
+        function resetRealtimeListeners() {
+            if (unsubMessages) {
+                unsubMessages();
+                unsubMessages = null;
+            }
+            if (unsubStatus) {
+                unsubStatus();
+                unsubStatus = null;
+            }
+            if (unsubChatList) {
+                unsubChatList();
+                unsubChatList = null;
+            }
+        }
+
+        // Sadece sekme tamamen kapatıldığında veya başka sayfaya gidildiğinde sinyal gider
         window.addEventListener("pagehide", () => {
             setOnlineOffline("offline");
         });
@@ -587,6 +689,11 @@
 
         // Otomatik Biyometrik Giriş Çözücü
         async function autoBiometricLogin(username) {
+            username = normalizeUsername(username);
+            if (!isValidUsername(username)) {
+                cancelAutoLogin();
+                return;
+            }
             try {
                 const userDoc = await db.collection("users").doc(username).get();
                 if (userDoc.exists) {
@@ -619,12 +726,12 @@
             document.getElementById("autoLoginContainer").classList.add("hidden");
         }
 
-        // Manuel Giriş Yönetimi (PIN Hashleme Dahil)
+        // Manuel Giriş Yönetimi
         async function handleLogin() {
             const usernameInput = document.getElementById("usernameInput");
             const pinInput = document.getElementById("pinInput");
             
-            const username = usernameInput.value.trim().toLowerCase();
+            const username = normalizeUsername(usernameInput.value);
             const pin = pinInput.value.trim();
 
             const usernameError = document.getElementById("usernameError");
@@ -638,12 +745,20 @@
             let hasValidationFail = false;
 
             if (!username) {
-                usernameError.innerText = "Bu kısmın doldurulması elzemdir.";
+                usernameError.innerText = "Kullanıcı adı zorunludur.";
+                usernameError.classList.remove("hidden");
+                hasValidationFail = true;
+            } else if (!isValidUsername(username)) {
+                usernameError.innerText = "3-24 karakter kullanın: harf, rakam ve alt çizgi.";
                 usernameError.classList.remove("hidden");
                 hasValidationFail = true;
             }
             if (!pin) {
-                pinError.innerText = "Bu kısmın doldurulması elzemdir.";
+                pinError.innerText = "PIN zorunludur.";
+                pinError.classList.remove("hidden");
+                hasValidationFail = true;
+            } else if (!isValidPin(pin)) {
+                pinError.innerText = "PIN 4-6 haneli rakamlardan oluşmalıdır.";
                 pinError.classList.remove("hidden");
                 hasValidationFail = true;
             }
@@ -656,9 +771,7 @@
                 if (userDoc.exists) {
                     const userData = userDoc.data();
                     
-                    // Şifreyi SHA-256 olarak hashleyip veritabanındakiyle karşılaştırıyoruz (Kritik 2)
-                    const hashedPin = await hashPin(pin);
-                    if (userData.pin === hashedPin) {
+                    if (await verifyStoredPin(username, pin, userData)) {
                         const credentials = userData.credentials || [];
                         
                         const rememberMe = document.getElementById("rememberMeCheckbox").checked;
@@ -727,24 +840,28 @@
             }
         }
 
-        // Hesap Başvurusu Gönderme (PIN Şifre Hashlenerek Kaydedilir) (Kritik 3)
         async function createMembershipRequest() {
-            const username = document.getElementById("usernameInput").value.trim().toLowerCase();
+            const username = normalizeUsername(document.getElementById("usernameInput").value);
             const pin = document.getElementById("pinInput").value.trim();
 
-            if (pin.length < 4) {
-                document.getElementById("pinError").innerText = "Şifreniz en az 4 haneli olmalıdır.";
+            if (!isValidUsername(username)) {
+                document.getElementById("usernameError").innerText = "3-24 karakter kullanın: harf, rakam ve alt çizgi.";
+                document.getElementById("usernameError").classList.remove("hidden");
+                closeRequestModal();
+                return;
+            }
+
+            if (!isValidPin(pin)) {
+                document.getElementById("pinError").innerText = "PIN 4-6 haneli rakamlardan oluşmalıdır.";
                 document.getElementById("pinError").classList.remove("hidden");
                 closeRequestModal();
                 return;
             }
 
             try {
-                // PIN kodunu hashleyip talebe kaydediyoruz (Kritik 3)
-                const hashedPin = await hashPin(pin);
                 await db.collection("requests").doc(username).set({
                     username: username,
-                    pin: hashedPin,
+                    pinHash: await hashPin(username, pin),
                     timestamp: Date.now()
                 });
                 closeRequestModal();
@@ -761,9 +878,8 @@
         async function successfulLogin(username, userData) {
             currentUser = username;
             const credentials = userData.credentials || [];
-            
-            // Cihaz WebAuthn desteklemiyorsa biyometri modalını bypass et - İyileştirme Önerisi 1
-            if (credentials.length === 0 && window.PublicKeyCredential) {
+
+            if (credentials.length === 0 && await isPlatformBiometricAvailable()) {
                 document.getElementById("mandatoryBiometricModal").classList.remove("hidden");
             } else {
                 document.getElementById("lockScreen").classList.add("hidden");
@@ -777,22 +893,13 @@
             // Giriş esnasında tarayıcıdan anlık bildirim iznini talep etme
             requestNotificationPermission();
 
-            // Firestore Veritabanını tek kaynak olarak tema için kullan (Öneri 5)
             const userTheme = userData.theme || "sapphire";
             const userBg = userData.chatBackground || null;
             applyThemeColors(userTheme);
 
-            if (userBg) {
-                const bg = document.getElementById("chatBackground");
-                if (userBg.startsWith("#")) {
-                    bg.style.backgroundColor = userBg;
-                    bg.style.backgroundImage = "none";
-                } else if (isValidWallpaperUrl(userBg)) {
-                    bg.style.backgroundImage = `url('${userBg}')`;
-                }
-            }
+            const appliedUserBg = userBg ? applyChatBackground(userBg) : false;
 
-            initAppSettings();
+            initAppSettings(appliedUserBg ? userBg : null);
             loadActiveChatsList();
             updateMobileLayout();
         }
@@ -800,8 +907,10 @@
         // İlk Girişte Zorunlu Parmak İzi Kaydı
         async function registerMandatoryBiometric() {
             if (!currentUser) return;
-            if (!window.PublicKeyCredential) {
+            if (!await isPlatformBiometricAvailable()) {
                 alert("Tarayıcınız veya cihazınız biyometrik kaydı desteklemiyor.");
+                document.getElementById("mandatoryBiometricModal").classList.add("hidden");
+                document.getElementById("lockScreen").classList.add("hidden");
                 return;
             }
 
@@ -852,6 +961,10 @@
         // Ayarlar İçinden Yeni Parmak İzi Tanımlama
         async function registerBiometric() {
             if (!currentUser) return;
+            if (!await isPlatformBiometricAvailable()) {
+                alert("Tarayıcınız veya cihazınız biyometrik kaydı desteklemiyor.");
+                return;
+            }
             try {
                 const randomChallenge = new Uint8Array(32);
                 window.crypto.getRandomValues(randomChallenge);
@@ -886,6 +999,7 @@
         }
 
         function previewTheme(themeName) {
+            if (!themePresets[themeName]) themeName = "sapphire";
             selectedPreviewTheme = themeName;
             const theme = themePresets[themeName];
             
@@ -909,63 +1023,62 @@
             document.documentElement.style.setProperty('--theme-primary-hover', theme.hover);
         }
 
-        // Atomik Kullanıcı Adı Değiştirme (Transaction Batch) (Kritik 5)
         async function saveAdvancedSettings() {
             if (!currentUser) return;
 
-            const newUsernameInput = document.getElementById("settingsUsernameInput").value.trim().toLowerCase();
+            const newUsernameInput = normalizeUsername(document.getElementById("settingsUsernameInput").value);
             const pinInput = document.getElementById("settingsPinInput").value.trim();
             const errEl = document.getElementById("usernameChangeError");
 
             errEl.classList.add("hidden");
 
             const updates = {};
-            let isUsernameChanged = false;
+            const isUsernameChanged = newUsernameInput !== currentUser;
 
-            // Güvenli kullanıcı adı değişim kontrolü (Öneri 4)
-            if (newUsernameInput && newUsernameInput !== currentUser) {
-                const checkDoc = await db.collection("users").doc(newUsernameInput).get();
-                if (checkDoc.exists) {
-                    errEl.innerText = "Bu kullanıcı adı zaten kullanılmaktadır.";
-                    errEl.classList.remove("hidden");
-                    return;
-                }
-                isUsernameChanged = true;
+            if (!isValidUsername(newUsernameInput)) {
+                errEl.innerText = "3-24 karakter kullanın: harf, rakam ve alt çizgi.";
+                errEl.classList.remove("hidden");
+                return;
             }
 
             if (pinInput) {
-                if (pinInput.length < 4) {
-                    alert("Yeni PIN en az 4 haneli olmalıdır.");
+                if (!isValidPin(pinInput)) {
+                    alert("Yeni PIN 4-6 haneli rakamlardan oluşmalıdır.");
                     return;
                 }
-                // Girilen yeni PIN'i de kriptografik olarak hashliyoruz (Kritik 2)
-                updates.pin = await hashPin(pinInput);
+                updates.pinHash = await hashPin(newUsernameInput, pinInput);
+                updates.pin = firebase.firestore.FieldValue.delete();
             }
 
-            updates.theme = selectedPreviewTheme;
-            updates.chatBackground = themePresets[selectedPreviewTheme].bg;
+            const safeThemeName = themePresets[selectedPreviewTheme] ? selectedPreviewTheme : "sapphire";
+            updates.theme = safeThemeName;
+            updates.chatBackground = themePresets[safeThemeName].bg;
 
             try {
                 if (isUsernameChanged) {
-                    const oldUserDoc = await db.collection("users").doc(currentUser).get();
-                    const oldUserData = oldUserDoc.data();
+                    const previousUsername = currentUser;
+                    await db.runTransaction(async (transaction) => {
+                        const oldRef = db.collection("users").doc(previousUsername);
+                        const newRef = db.collection("users").doc(newUsernameInput);
+                        const oldUserDoc = await transaction.get(oldRef);
+                        const newUserDoc = await transaction.get(newRef);
 
-                    const newUserData = {
-                        ...oldUserData,
-                        ...updates,
-                        username: newUsernameInput,
-                        oldUsernames: firebase.firestore.FieldValue.arrayUnion(currentUser)
-                    };
+                        if (!oldUserDoc.exists) throw new Error("Mevcut kullanıcı kaydı bulunamadı.");
+                        if (newUserDoc.exists) throw new Error("Bu kullanıcı adı zaten kullanılmaktadır.");
 
-                    // Atomik İşlem (Write Batch) - Güvenlik Açığı Kapatıldı (Kritik 5)
-                    const batch = db.batch();
-                    const oldRef = db.collection("users").doc(currentUser);
-                    const newRef = db.collection("users").doc(newUsernameInput);
+                        const oldUserData = oldUserDoc.data();
+                        const oldUsernames = Array.isArray(oldUserData.oldUsernames) ? oldUserData.oldUsernames : [];
+                        const newUserData = {
+                            ...oldUserData,
+                            ...updates,
+                            username: newUsernameInput,
+                            oldUsernames: Array.from(new Set([...oldUsernames, previousUsername]))
+                        };
+                        delete newUserData.pin;
 
-                    batch.set(newRef, newUserData);
-                    batch.delete(oldRef);
-
-                    await batch.commit();
+                        transaction.set(newRef, newUserData);
+                        transaction.delete(oldRef);
+                    });
 
                     currentUser = newUsernameInput;
                     if (localStorage.getItem("remembered_user")) {
@@ -978,12 +1091,11 @@
                     await db.collection("users").doc(currentUser).update(updates);
                 }
 
-                applyThemeColors(selectedPreviewTheme);
-                const bg = document.getElementById("chatBackground");
-                bg.style.backgroundImage = "none";
-                bg.style.backgroundColor = themePresets[selectedPreviewTheme].bg;
+                applyThemeColors(safeThemeName);
+                applyChatBackground(themePresets[safeThemeName].bg);
 
                 closeSettingsModal();
+                document.getElementById("settingsPinInput").value = "";
             } catch (err) {
                 alert("Kaydetme hatası: " + err.message);
             }
@@ -992,6 +1104,7 @@
         function openSettingsModal() {
             document.getElementById("settingsModal").classList.remove("hidden");
             document.getElementById("settingsUsernameInput").value = currentUser;
+            document.getElementById("settingsPinInput").value = "";
             document.getElementById("usernameChangeError").classList.add("hidden");
             
             db.collection("users").doc(currentUser).get().then(doc => {
@@ -1063,8 +1176,13 @@
         window.addEventListener("resize", updateMobileLayout);
 
         async function startNewChat() {
-            const targetUser = document.getElementById("searchUserField").value.trim().toLowerCase();
+            const targetUser = normalizeUsername(document.getElementById("searchUserField").value);
             if (!targetUser || targetUser === currentUser) return;
+
+            if (!isValidUsername(targetUser)) {
+                alert("Kullanıcı adı 3-24 karakter olmalı; harf, rakam ve alt çizgi kullanabilirsiniz.");
+                return;
+            }
 
             try {
                 const userDoc = await db.collection("users").doc(targetUser).get();
@@ -1115,11 +1233,13 @@
                 [`hiddenBy.${currentUser}`]: false 
             });
 
-            const otherUserSnap = await db.collection("users").doc(targetUserDoc).get();
-            const otherUserData = otherUserSnap.data() || {};
-            const otherDisplayName = otherUserData.displayName || targetUserDoc.toUpperCase();
-
-            document.getElementById("activeChatName").innerHTML = `@${targetUserDoc.toUpperCase()} <i class="fa-solid fa-caret-down text-[10px] text-slate-400"></i>`;
+            const activeName = document.getElementById("activeChatName");
+            activeName.textContent = "";
+            const activeNameText = document.createElement("span");
+            activeNameText.innerText = `@${targetUserDoc.toUpperCase()}`;
+            const activeNameIcon = document.createElement("i");
+            activeNameIcon.className = "fa-solid fa-caret-down text-[10px] text-slate-400";
+            activeName.append(activeNameText, activeNameIcon);
             document.getElementById("activeAvatar").innerText = targetUserDoc.substring(0, 2).toUpperCase();
 
             cancelReply();
@@ -1150,6 +1270,12 @@
             document.getElementById("replyPreviewBar").classList.add("hidden");
         }
 
+        document.getElementById("replyPreviewBar").addEventListener("click", (e) => {
+            if (replyingToMsgId && !e.target.closest('button')) {
+                scrollToMessage(replyingToMsgId);
+            }
+        });
+
         function scrollToMessage(msgId) {
             if (window.innerWidth < 768) {
                 document.getElementById("messageInput").blur();
@@ -1174,31 +1300,23 @@
             
             unsubMessages = messagesRef.orderBy("timestamp", "desc").limit(50).onSnapshot((snapshot) => {
                 const container = document.getElementById("messageContainer");
+                container.innerHTML = "";
 
-                const newIds = new Set();
+                const batch = db.batch();
+                let hasUpdates = false;
                 const msgsArray = [];
 
                 snapshot.forEach((doc) => {
                     const msg = doc.data();
                     if (msg.timestamp <= clearTime) return;
-                    newIds.add(doc.id);
                     msgsArray.unshift({ id: doc.id, ref: doc.ref, ...msg });
                 });
 
-                // 1. Silinen Mesajları DOM'dan Kaldır (Flicker-Free Diffing) - Performans Açığı Kapatıldı (Orta 3)
-                Array.from(container.children).forEach(child => {
-                    const id = child.id.replace("msg_", "");
-                    if (!newIds.has(id)) {
-                        child.remove();
-                    }
-                });
-
-                // 2. Mesajları Güncelle veya Ekle (Orta 3)
                 msgsArray.forEach((msg) => {
                     const isMe = msg.sender === currentUser;
                     const bgStyle = isMe 
-                        ? `background-color: var(--theme-sender-bg); color: #ffffff;` 
-                        : `background-color: var(--theme-receiver-bg); color: #f1f5f9;`;
+                        ? "background-color: var(--theme-sender-bg); color: #ffffff;" 
+                        : "background-color: var(--theme-receiver-bg); color: #f1f5f9;";
                     const roundedStyle = isMe ? "rounded-tr-none" : "rounded-tl-none";
 
                     let ticks = "";
@@ -1210,57 +1328,60 @@
                         }
                     }
 
-                    // XSS Açığı Kapatıldı (Kritik 4)
-                    const cleanText = escapeHTML(msg.text);
+                    if (!isMe && msg.status === "sent") {
+                        batch.update(msg.ref, { status: "read" });
+                        hasUpdates = true;
+                    }
+
+                    const timeStr = formatTime(msg.timestamp);
+                    const messageText = sanitizeMessageText(msg.text);
+                    const msgIdAttr = escapeAttr(msg.id);
+                    const senderAttr = escapeAttr(msg.sender);
+                    const messageAttr = escapeAttr(messageText);
 
                     let replyBlockHtml = "";
                     if (msg.replyToId) {
-                        const cleanReplySender = escapeHTML(msg.replyToSender);
-                        const cleanReplyText = escapeHTML(msg.replyToText);
+                        const replyTargetAttr = escapeAttr(msg.replyToId);
+                        const replySender = escapeHtml(String(msg.replyToSender || "").toUpperCase());
+                        const replyText = escapeHtml(sanitizeMessageText(msg.replyToText));
                         replyBlockHtml = `
-                            <div data-reply-to-id="${msg.replyToId}" class="bg-black/20 p-2 rounded-xl text-left text-[11px] mb-2 cursor-pointer border-l-2 border-blue-400 opacity-80 hover:opacity-100 transition-opacity max-w-full">
-                                <span class="font-bold block text-[9px] text-blue-300">@${cleanReplySender.toUpperCase()}</span>
-                                <span class="truncate block text-slate-300">${cleanReplyText}</span>
+                            <div data-reply-target="${replyTargetAttr}" class="reply-jump bg-black/20 p-2 rounded-xl text-left text-[11px] mb-2 cursor-pointer border-l-2 border-blue-400 opacity-80 hover:opacity-100 transition-opacity max-w-full">
+                                <span class="font-bold block text-[9px] text-blue-300">@${replySender}</span>
+                                <span class="truncate block text-slate-300">${replyText}</span>
                             </div>
                         `;
                     }
 
-                    const existingElement = document.getElementById(`msg_${msg.id}`);
-                    
-                    const msgInnerHtml = `
-                        <div class="message-content px-3.5 py-2 rounded-2xl ${roundedStyle} shadow-lg border border-white/5 cursor-pointer transition-all" style="${bgStyle}">
-                            ${replyBlockHtml}
-                            <p class="text-[13px] leading-relaxed whitespace-pre-line">${cleanText}</p>
-                            <div class="flex items-center justify-end gap-1 mt-1 text-[8px] ${isMe ? 'text-blue-200' : 'text-slate-400'}">
-                                <span>${formatTime(msg.timestamp)}</span>
-                                <span class="msg-ticks">${ticks}</span>
+                    const msgHtml = `
+                        <div id="msg_${msgIdAttr}" class="flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'items-start'} transition-all duration-300 rounded-2xl">
+                            <div class="message-content px-3.5 py-2 rounded-2xl ${roundedStyle} shadow-lg border border-white/5 cursor-pointer transition-all" style="${bgStyle}" data-msg-id="${msgIdAttr}" data-msg-sender="${senderAttr}" data-msg-text="${messageAttr}">
+                                ${replyBlockHtml}
+                                <p class="text-[13px] leading-relaxed whitespace-pre-line">${escapeHtml(messageText)}</p>
+                                <div class="flex items-center justify-end gap-1 mt-1 text-[8px] ${isMe ? 'text-blue-200' : 'text-slate-400'}">
+                                    <span>${timeStr}</span>
+                                    ${ticks}
+                                </div>
                             </div>
                         </div>
                     `;
-
-                    if (existingElement) {
-                        // Sadece tikler veya durum değiştiyse güncelle (Orta 3)
-                        const ticksContainer = existingElement.querySelector(".msg-ticks");
-                        if (ticksContainer && ticksContainer.innerHTML !== ticks) {
-                            ticksContainer.innerHTML = ticks;
-                        }
-                    } else {
-                        // Yeni mesajı ekle
-                        const div = document.createElement("div");
-                        div.id = `msg_${msg.id}`;
-                        div.className = `flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'items-start'} transition-all duration-300 rounded-2xl`;
-                        div.setAttribute("data-msg-id", msg.id);
-                        div.setAttribute("data-msg-sender", msg.sender);
-                        div.setAttribute("data-msg-text", msg.text);
-                        div.innerHTML = msgInnerHtml;
-                        container.appendChild(div);
-                    }
-
-                    // Alıcı "sent" ise "read" yap
-                    if (!isMe && msg.status === "sent") {
-                        msg.ref.update({ status: "read" });
-                    }
+                    container.insertAdjacentHTML("beforeend", msgHtml);
+                    const renderedMessage = container.lastElementChild;
+                    const contentEl = renderedMessage?.querySelector(".message-content");
+                    contentEl?.addEventListener("dblclick", () => {
+                        triggerReply(msg.id, msg.sender, messageText);
+                    });
+                    renderedMessage?.querySelectorAll(".reply-jump").forEach((replyEl) => {
+                        replyEl.addEventListener("click", (event) => {
+                            event.stopPropagation();
+                            scrollToMessage(replyEl.dataset.replyTarget);
+                        });
+                    });
                 });
+
+                if (hasUpdates) {
+                    batch.commit().catch(err => console.error(err));
+                    db.collection("chats").doc(activeChatId).update({ lastMessageStatus: "read" });
+                }
 
                 setTimeout(() => {
                     document.getElementById("chatBackground").scrollTop = document.getElementById("chatBackground").scrollHeight;
@@ -1308,7 +1429,7 @@
 
         async function sendMessage() {
             const input = document.getElementById("messageInput");
-            const text = input.value.trim();
+            const text = sanitizeMessageText(input.value.trim());
             if (!text || !activeChatId) return;
 
             const now = Date.now();
@@ -1364,158 +1485,177 @@
             typingTimeout = setTimeout(() => { setTypingStatus(false); }, 2000);
         });
 
+        document.getElementById("pinInput").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") handleLogin();
+        });
+
+        document.getElementById("usernameInput").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") document.getElementById("pinInput").focus();
+        });
+
+        document.getElementById("searchUserField").addEventListener("keydown", (event) => {
+            if (event.key === "Enter") startNewChat();
+        });
+
         // Sohbet Listesi ve Gerçek Zamanlı Akıllı Bildirim Motoru
         function loadActiveChatsList() {
-            // Sadece içinde currentUser olan sohbet odalarını veritabanı seviyesinde filtrele (Öneri 3)
-            db.collection("chats")
-              .where("users", "array-contains", currentUser)
-              .orderBy("lastMessageTime", "desc")
-              .onSnapshot((snapshot) => {
+            if (unsubChatList) unsubChatList();
+            lastProcessedTimes = {};
+            let isInitialSnapshot = true;
+
+            unsubChatList = db.collection("chats")
+                .where("users", "array-contains", currentUser)
+                .orderBy("lastMessageTime", "desc")
+                .onSnapshot((snapshot) => {
                 const listContainer = document.getElementById("chatList");
                 listContainer.innerHTML = "";
                 let hasChat = false;
 
-                // Mükerrer bildirim sesini/ekran bildirimini önlemek için başlangıç durumunu eşitliyoruz
-                if (Object.keys(lastProcessedTimes).length === 0) {
+                if (isInitialSnapshot) {
                     snapshot.forEach(doc => {
                         const chat = doc.data();
                         lastProcessedTimes[chat.chatId] = chat.lastMessageTime || 0;
                     });
-                    isInitialLoad = false; // İlk veri tabanı yüklemesi bitti, bildirimleri aç (Orta 2)
+                    isInitialSnapshot = false;
                 }
 
                 snapshot.forEach((doc) => {
                     const chat = doc.data();
-                    const isHiddenForMe = chat.hiddenBy && chat.hiddenBy[currentUser];
-                    if (isHiddenForMe) return;
+                    if (Array.isArray(chat.users) && chat.users.includes(currentUser)) {
+                        const isHiddenForMe = chat.hiddenBy && chat.hiddenBy[currentUser];
+                        if (isHiddenForMe) return;
 
-                    hasChat = true;
-                    const partner = chat.users.find(u => u !== currentUser);
-                    const lastMsgText = chat.lastMessageText || "Henüz mesaj yok";
-                    const lastSender = chat.lastMessageSender;
-                    const lastStatus = chat.lastMessageStatus;
-                    const unreadCount = (chat.unreadCounts && chat.unreadCounts[currentUser]) || 0;
+                        hasChat = true;
+                        const partner = chat.users.find(u => u !== currentUser);
+                        if (!partner) return;
+                        const lastMsgText = sanitizeMessageText(chat.lastMessageText || "Henüz mesaj yok");
+                        const lastSender = chat.lastMessageSender;
+                        const lastStatus = chat.lastMessageStatus;
+                        const unreadCount = Math.max(0, Number((chat.unreadCounts && chat.unreadCounts[currentUser]) || 0));
 
-                    // --- BİLDİRİM TETİKLEME ALGORİTMASI ---
-                    const msgTime = chat.lastMessageTime;
-                    if (!isInitialLoad && lastSender && lastSender !== currentUser && msgTime > (lastProcessedTimes[chat.chatId] || 0)) {
-                        const isVeryRecent = (Date.now() - msgTime) < 5000; // Son 5 saniye içinde mi geldi?
-                        
-                        // Zaman kaydını güncelle
-                        lastProcessedTimes[chat.chatId] = msgTime;
+                        // --- BİLDİRİM TETİKLEME ALGORİTMASI ---
+                        const msgTime = chat.lastMessageTime;
+                        if (lastSender && lastSender !== currentUser && msgTime > (lastProcessedTimes[chat.chatId] || 0)) {
+                            const isVeryRecent = (Date.now() - msgTime) < 5000; // Son 5 saniye içinde mi geldi?
+                            
+                            // Zaman kaydını güncelle
+                            lastProcessedTimes[chat.chatId] = msgTime;
 
-                        if (isVeryRecent) {
-                            // Eğer bu pencere aktif olarak açık değilse veya sekme tamamen arka plandaysa bildir!
-                            if (chat.chatId !== activeChatId || document.hidden) {
-                                playNotificationSound(); // Yumuşak çift bip
-                                
-                                if (document.hidden) {
-                                    startTitleFlash(lastSender); // Başlığı yak söndür
-                                    showPushNotification(lastSender, lastMsgText, chat.chatId, partner); // Ekran bildirimi fırlat
+                            if (isVeryRecent) {
+                                // Eğer bu pencere aktif olarak açık değilse veya sekme tamamen arka plandaysa bildir!
+                                if (chat.chatId !== activeChatId || document.hidden) {
+                                    playNotificationSound(); // Yumuşak çift bip
+                                    
+                                    if (document.hidden) {
+                                        startTitleFlash(lastSender); // Başlığı yak söndür
+                                        showPushNotification(lastSender, lastMsgText, chat.chatId, partner); // Ekran bildirimi fırlat
+                                    }
                                 }
                             }
+                        } else {
+                            // Zaman damgası takibini güncel tut (Eski mesajların girişte ötmesini engeller)
+                            lastProcessedTimes[chat.chatId] = msgTime || 0;
                         }
-                    } else {
-                        // Zaman damgası takibini güncel tut (Eski mesajların girişte ötmesini engeller)
-                        lastProcessedTimes[chat.chatId] = msgTime || 0;
-                    }
 
-                    let ticks = "";
-                    if (lastSender === currentUser) {
-                        if (lastStatus === "sent") {
-                            ticks = '<i class="fa-solid fa-check text-slate-500 text-[10px] mr-1"></i>';
-                        } else if (lastStatus === "read") {
-                            ticks = '<i class="fa-solid fa-check-double text-blue-400 text-[10px] mr-1"></i>';
+                        let ticks = "";
+                        if (lastSender === currentUser) {
+                            if (lastStatus === "sent") {
+                                ticks = '<i class="fa-solid fa-check text-slate-500 text-[10px] mr-1"></i>';
+                            } else if (lastStatus === "read") {
+                                ticks = '<i class="fa-solid fa-check-double text-blue-400 text-[10px] mr-1"></i>';
+                            }
                         }
-                    }
 
-                    let unreadBadge = "";
-                    let itemBg = "hover:bg-slate-800/30";
-                    if (unreadCount > 0) {
-                        unreadBadge = `<span class="w-5 h-5 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce shadow-md shadow-blue-500/20">${unreadCount}</span>`;
-                        itemBg = "bg-blue-600/5 hover:bg-blue-600/10 border-l-4 border-blue-500"; 
-                    } else if (chat.chatId === activeChatId) {
-                        itemBg = "bg-slate-800/60 border-l-4 border-slate-500";
-                    }
+                        let unreadBadge = "";
+                        let itemBg = "hover:bg-slate-800/30";
+                        if (unreadCount > 0) {
+                            unreadBadge = `<span class="w-5 h-5 bg-blue-500 text-white text-[10px] font-bold rounded-full flex items-center justify-center animate-bounce shadow-md shadow-blue-500/20">${Math.min(unreadCount, 99)}</span>`;
+                            itemBg = "bg-blue-600/5 hover:bg-blue-600/10 border-l-4 border-blue-500"; 
+                        } else if (chat.chatId === activeChatId) {
+                            itemBg = "bg-slate-800/60 border-l-4 border-slate-500";
+                        }
 
-                    const chatHtml = `
-                        <div data-chat-id="${chat.chatId}" data-partner="${partner}" class="flex items-center gap-3 p-4 border-b border-slate-900/30 cursor-pointer transition-all ${itemBg}">
-                            <div class="w-11 h-11 theme-btn rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow">
-                                ${partner.substring(0,2).toUpperCase()}
-                            </div>
-                            <div class="flex-1 min-w-0">
-                                <div class="flex justify-between items-baseline mb-0.5">
-                                    <h4 class="font-bold text-xs text-slate-200 truncate">${partner.toUpperCase()}</h4>
-                                    <span class="text-[9px] text-slate-500 font-semibold">${chat.lastMessageTime ? formatTime(chat.lastMessageTime) : ""}</span>
+                        const chatHtml = `
+                            <div class="flex items-center gap-3 p-4 border-b border-slate-900/30 cursor-pointer transition-all ${itemBg}">
+                                <div class="w-11 h-11 theme-btn rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow">
+                                    ${escapeHtml(partner.substring(0,2).toUpperCase())}
                                 </div>
-                                <div class="flex items-center justify-between">
-                                    <p class="text-[11px] text-slate-400 truncate font-medium flex items-center">
-                                        ${ticks} ${escapeHTML(lastMsgText)}
-                                    </p>
-                                    ${unreadBadge}
+                                <div class="flex-1 min-w-0">
+                                    <div class="flex justify-between items-baseline mb-0.5">
+                                        <h4 class="font-bold text-xs text-slate-200 truncate">${escapeHtml(partner.toUpperCase())}</h4>
+                                        <span class="text-[9px] text-slate-500 font-semibold">${chat.lastMessageTime ? formatTime(chat.lastMessageTime) : ""}</span>
+                                    </div>
+                                    <div class="flex items-center justify-between">
+                                        <p class="text-[11px] text-slate-400 truncate font-medium flex items-center">
+                                            ${ticks} ${escapeHtml(lastMsgText)}
+                                        </p>
+                                        ${unreadBadge}
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    `;
-                    listContainer.insertAdjacentHTML("beforeend", chatHtml);
+                        `;
+                        listContainer.insertAdjacentHTML("beforeend", chatHtml);
+
+                        listContainer.lastElementChild?.addEventListener("click", () => {
+                            selectChatRoom(chat.chatId, partner);
+                        });
+                    }
                 });
 
                 if (!hasChat) {
                     listContainer.innerHTML = `
                         <div class="flex flex-col items-center justify-center text-center p-8 mt-12 space-y-3">
                             <div class="w-14 h-14 bg-blue-500/5 text-blue-500/40 rounded-2xl flex items-center justify-center text-xl">
-                                <i class="fa-solid fa-ghost"></i>
+                                <i class="fa-regular fa-comments"></i>
                             </div>
-                            <h5 class="text-xs font-bold text-slate-300">Burada kimsecikler yok...</h5>
+                            <h5 class="text-xs font-bold text-slate-300">Henüz sohbet yok</h5>
                             <p class="text-[10px] text-slate-500 max-w-[180px] leading-relaxed">Yeni bir sohbet odası başlatmak için yukarıdaki arama alanını kullanabilirsiniz.</p>
                         </div>
                     `;
                 }
+            }, (err) => {
+                console.error("Sohbet listesi dinleme hatası:", err);
             });
         }
 
-        function initAppSettings() {
+        function initAppSettings(userBg) {
+            if (userBg) {
+                localStorage.setItem("chat_background", userBg);
+                return;
+            }
+
             const savedBg = localStorage.getItem("chat_background");
             if (savedBg) {
-                const bg = document.getElementById("chatBackground");
-                if (savedBg.startsWith("#")) {
-                    bg.style.backgroundColor = savedBg;
-                    bg.style.backgroundImage = "none";
-                } else if (isValidWallpaperUrl(savedBg)) {
-                    bg.style.backgroundImage = `url('${savedBg}')`;
+                if (!applyChatBackground(savedBg)) {
+                    localStorage.removeItem("chat_background");
                 }
             }
         }
 
         async function changeBgColor(hexColor) {
-            const bg = document.getElementById("chatBackground");
-            bg.style.backgroundImage = "none";
-            bg.style.backgroundColor = hexColor;
+            if (!isSafeHexColor(hexColor)) return;
+            applyChatBackground(hexColor);
             localStorage.setItem("chat_background", hexColor);
             if (currentUser) await db.collection("users").doc(currentUser).update({ chatBackground: hexColor });
             closeWallpaperModal();
         }
 
         async function changeBgImage(url) {
-            if (!isValidWallpaperUrl(url)) {
-                alert("Güvensiz duvar kağıdı kaynağı!");
-                return;
-            }
-            const bg = document.getElementById("chatBackground");
-            bg.style.backgroundImage = `url('${url}')`;
+            if (!isAllowedBackgroundUrl(url)) return;
+            applyChatBackground(url);
             localStorage.setItem("chat_background", url);
             if (currentUser) await db.collection("users").doc(currentUser).update({ chatBackground: url });
             closeWallpaperModal();
         }
 
         async function logout() {
-            // Çıkış yaparken aktif listener'ları kapatarak Memory Leak'leri engelliyoruz (Orta 1)
-            if (unsubMessages) { unsubMessages(); unsubMessages = null; }
-            if (unsubStatus) { unsubStatus(); unsubStatus = null; }
-
             if (currentUser) await db.collection("users").doc(currentUser).update({ status: "offline", lastActive: Date.now() });
+            resetRealtimeListeners();
+            stopTitleFlash();
             localStorage.removeItem("remembered_user");
             currentUser = null; activeChatId = null; otherUser = null; currentMobileView = 'list';
+            document.getElementById("chatList").innerHTML = "";
+            document.getElementById("messageContainer").innerHTML = "";
             document.getElementById("lockScreen").classList.remove("hidden");
             document.getElementById("activeChatContainer").classList.add("hidden");
             document.getElementById("welcomeScreen").classList.remove("hidden");
@@ -1529,95 +1669,32 @@
             return date.getHours().toString().padStart(2, '0') + ":" + date.getMinutes().toString().padStart(2, '0');
         }
 
-        // --- OLAY DELEGASYONU (EVENT DELEGATION) --- (Orta 4)
-        // Güvenlik ve performans için global window scope kirliliği kaldırıldı, tüm tıklamalar tek elden yönetiliyor.
+        window.handleLogin = handleLogin;
+        window.autoBiometricLogin = autoBiometricLogin;
+        window.createMembershipRequest = createMembershipRequest;
+        window.registerMandatoryBiometric = registerMandatoryBiometric;
+        window.registerBiometric = registerBiometric;
+        window.startNewChat = startNewChat;
+        window.sendMessage = sendMessage;
+        window.logout = logout;
+        window.closeRequestModal = closeRequestModal;
+        window.goBackToList = goBackToList;
+        window.openSettingsModal = openSettingsModal;
+        window.closeSettingsModal = closeSettingsModal;
+        window.saveAdvancedSettings = saveAdvancedSettings;
+        window.previewTheme = previewTheme;
+        window.togglePinVisibility = togglePinVisibility;
+        window.toggleChatActionsMenu = toggleChatActionsMenu;
+        window.deleteChatForMe = deleteChatForMe;
+        window.triggerReply = triggerReply;
+        window.cancelReply = cancelReply;
+        window.scrollToMessage = scrollToMessage;
 
-        document.getElementById("togglePinBtn").addEventListener("click", togglePinVisibility);
-        document.getElementById("loginBtn").addEventListener("click", handleLogin);
-        document.getElementById("mandatoryBioBtn").addEventListener("click", registerMandatoryBiometric);
-        document.getElementById("requestApproveBtn").addEventListener("click", createMembershipRequest);
-        document.getElementById("requestCloseBtn").addEventListener("click", closeRequestModal);
-        document.getElementById("sidebarSettingsBtn").addEventListener("click", openSettingsModal);
-        document.getElementById("sidebarLogoutBtn").addEventListener("click", logout);
-        document.getElementById("startChatBtn").addEventListener("click", startNewChat);
-        document.getElementById("chatBackBtn").addEventListener("click", goBackToList);
-        document.getElementById("chatHeaderTitle").addEventListener("click", toggleChatActionsMenu);
-        document.getElementById("clearChatBtn").addEventListener("click", deleteChatForMe);
-        document.getElementById("cancelReplyBtn").addEventListener("click", cancelReply);
-        document.getElementById("sendMsgBtn").addEventListener("click", sendMessage);
-        document.getElementById("openWallpaperBtn").addEventListener("click", () => document.getElementById("wallpaperModal").classList.remove("hidden"));
-        
-        document.getElementById("settingsCloseIconBtn").addEventListener("click", closeSettingsModal);
-        document.getElementById("settingsBioRegBtn").addEventListener("click", registerBiometric);
-        document.getElementById("settingsSaveBtn").addEventListener("click", saveAdvancedSettings);
-        document.getElementById("settingsCancelBtn").addEventListener("click", closeSettingsModal);
-        
-        document.getElementById("wallpaperCloseBtn").addEventListener("click", () => document.getElementById("wallpaperModal").classList.add("hidden"));
-
-        // Enter tuşu ile Giriş Yapabilme - İyileştirme Önerisi 2
-        document.getElementById("pinInput").addEventListener("keypress", (e) => {
-            if (e.key === "Enter") handleLogin();
-        });
-        document.getElementById("usernameInput").addEventListener("keypress", (e) => {
-            if (e.key === "Enter") handleLogin();
-        });
-
-        // Sohbet Listesi Tıklama Delegasyonu (Orta 4)
-        document.getElementById("chatList").addEventListener("click", (e) => {
-            const card = e.target.closest("[data-chat-id]");
-            if (card) {
-                const chatId = card.getAttribute("data-chat-id");
-                const partner = card.getAttribute("data-partner");
-                selectChatRoom(chatId, partner);
-            }
-        });
-
-        // Mesajlar Alanı Çift Tıklama & Alıntı Tıklama Delegasyonu (Orta 4)
-        document.getElementById("messageContainer").addEventListener("dblclick", (e) => {
-            const content = e.target.closest(".message-content");
-            if (content) {
-                const bubble = content.closest("[data-msg-id]");
-                const msgId = bubble.getAttribute("data-msg-id");
-                const sender = bubble.getAttribute("data-msg-sender");
-                const text = bubble.getAttribute("data-msg-text");
-                triggerReply(msgId, sender, text);
-            }
-        });
-
-        document.getElementById("messageContainer").addEventListener("click", (e) => {
-            const replyBlock = e.target.closest("[data-reply-to-id]");
-            if (replyBlock) {
-                const targetId = replyBlock.getAttribute("data-reply-to-id");
-                scrollToMessage(targetId);
-            }
-        });
-
-        // Tema Seçim Butonları Delegasyonu
-        document.getElementById("themeButtonsGrid").addEventListener("click", (e) => {
-            const btn = e.target.closest("[data-theme]");
-            if (btn) {
-                const themeName = btn.getAttribute("data-theme");
-                previewTheme(themeName);
-            }
-        });
-
-        // Duvar Kağıdı Renk Seçim Delegasyonu
-        document.getElementById("wallpaperColorsGrid").addEventListener("click", (e) => {
-            const btn = e.target.closest("[data-color]");
-            if (btn) {
-                const color = btn.getAttribute("data-color");
-                changeBgColor(color);
-            }
-        });
-
-        // Duvar Kağıdı Resim Seçim Delegasyonu
-        document.getElementById("wallpaperImagesGrid").addEventListener("click", (e) => {
-            const img = e.target.closest("img");
-            if (img) {
-                changeBgImage(img.src);
-            }
-        });
-
+        window.openWallpaperModal = () => document.getElementById("wallpaperModal").classList.remove("hidden");
+        window.closeWallpaperModal = () => document.getElementById("wallpaperModal").classList.add("hidden");
+        window.changeBgColor = changeBgColor;
+        window.changeBgImage = changeBgImage;
+        window.handleKeyPress = (e) => { if (e.key === "Enter") sendMessage(); };
     </script>
 </body>
 </html>
