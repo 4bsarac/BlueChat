@@ -410,6 +410,12 @@
                     </div>
 
                     <div>
+                        <label class="block text-[10px] text-slate-500 mb-1 font-semibold">Profil Fotoğrafı URL</label>
+                        <input type="url" id="settingsAvatarUrlInput" placeholder="Supabase public görsel URL'si" autocomplete="off" spellcheck="false" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                        <p id="avatarUrlError" class="text-red-400 text-[10px] mt-1 hidden"></p>
+                    </div>
+
+                    <div>
                         <label class="block text-[10px] text-slate-500 mb-1 font-semibold">Giriş PIN Şifresi</label>
                         <input type="password" id="settingsPinInput" placeholder="Değiştirmek istemiyorsanız boş bırakın" maxlength="32" autocomplete="new-password" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
                     </div>
@@ -522,6 +528,7 @@
         const USERNAME_PATTERN = /^[a-z0-9_]{3,24}$/;
         const PIN_PATTERN = /^\S{4,32}$/;
         const ALLOWED_BACKGROUND_HOSTS = new Set(["images.unsplash.com"]);
+        const ALLOWED_AVATAR_HOSTS = new Set(["knsriucinxcxmbkbfzqf.supabase.co", "images.unsplash.com"]);
 
         function normalizeUsername(value) {
             return String(value || "").trim().toLowerCase();
@@ -589,6 +596,51 @@
                 return url.protocol === "https:" && ALLOWED_BACKGROUND_HOSTS.has(url.hostname);
             } catch {
                 return false;
+            }
+        }
+
+        function isAllowedAvatarUrl(value) {
+            if (!value) return true;
+            try {
+                const url = new URL(value);
+                return url.protocol === "https:" && ALLOWED_AVATAR_HOSTS.has(url.hostname);
+            } catch {
+                return false;
+            }
+        }
+
+        function applyAvatar(el, username, avatarUrl) {
+            if (!el) return;
+            const initials = String(username || "?").substring(0, 2).toUpperCase();
+            el.textContent = "";
+            el.classList.add("overflow-hidden");
+
+            if (avatarUrl && isAllowedAvatarUrl(avatarUrl)) {
+                const img = document.createElement("img");
+                img.src = avatarUrl;
+                img.alt = `${username || "Kullanıcı"} profil fotoğrafı`;
+                img.className = "w-full h-full object-cover";
+                img.referrerPolicy = "no-referrer";
+                img.onerror = () => {
+                    el.textContent = initials;
+                };
+                el.appendChild(img);
+            } else {
+                el.textContent = initials;
+            }
+        }
+
+        async function getUserProfile(username) {
+            if (!username) return {};
+            if (userProfileCache[username]) return userProfileCache[username];
+            try {
+                const doc = await db.collection("users").doc(username).get();
+                const profile = doc.exists ? doc.data() : {};
+                userProfileCache[username] = profile;
+                return profile;
+            } catch (err) {
+                console.error("Profil bilgisi alınamadı:", err);
+                return {};
             }
         }
 
@@ -721,6 +773,7 @@
         let selectedMessageAction = null;
         let shouldScrollOnNextMessages = false;
         let soundNotificationsEnabled = true;
+        const userProfileCache = {};
         let unsubMessages = null;
         let unsubStatus = null;
         let unsubChatList = null;
@@ -1124,7 +1177,7 @@
             }
 
             document.getElementById("myDisplayName").innerText = `@${username.toUpperCase()}`;
-            document.getElementById("myAvatar").innerText = username.substring(0, 2).toUpperCase();
+            applyAvatar(document.getElementById("myAvatar"), username, userData.avatarUrl);
             
             await db.collection("users").doc(currentUser).update({ status: "online" });
 
@@ -1267,8 +1320,11 @@
             const newUsernameInput = normalizeUsername(document.getElementById("settingsUsernameInput").value);
             const pinInput = document.getElementById("settingsPinInput").value.trim();
             const errEl = document.getElementById("usernameChangeError");
+            const avatarUrlInput = document.getElementById("settingsAvatarUrlInput").value.trim();
+            const avatarErrEl = document.getElementById("avatarUrlError");
 
             errEl.classList.add("hidden");
+            avatarErrEl.classList.add("hidden");
 
             const updates = {};
             const isUsernameChanged = newUsernameInput !== currentUser;
@@ -1287,6 +1343,13 @@
                 updates.pinHash = await hashPin(newUsernameInput, pinInput);
                 updates.pin = firebase.firestore.FieldValue.delete();
             }
+
+            if (avatarUrlInput && !isAllowedAvatarUrl(avatarUrlInput)) {
+                avatarErrEl.innerText = "Sadece izinli HTTPS görsel URL'si kullanılabilir.";
+                avatarErrEl.classList.remove("hidden");
+                return;
+            }
+            updates.avatarUrl = avatarUrlInput || firebase.firestore.FieldValue.delete();
 
             const safeThemeName = themePresets[selectedPreviewTheme] ? selectedPreviewTheme : "sapphire";
             updates.theme = safeThemeName;
@@ -1313,6 +1376,7 @@
                             oldUsernames: Array.from(new Set([...oldUsernames, previousUsername]))
                         };
                         delete newUserData.pin;
+                        if (!avatarUrlInput) delete newUserData.avatarUrl;
 
                         transaction.set(newRef, newUserData);
                         transaction.delete(oldRef);
@@ -1322,13 +1386,14 @@
                     if (localStorage.getItem("remembered_user")) {
                         localStorage.setItem("remembered_user", newUsernameInput);
                     }
-                    
+                     
                     document.getElementById("myDisplayName").innerText = `@${newUsernameInput.toUpperCase()}`;
-                    document.getElementById("myAvatar").innerText = newUsernameInput.substring(0, 2).toUpperCase();
                 } else {
                     await db.collection("users").doc(currentUser).update(updates);
                 }
 
+                userProfileCache[newUsernameInput] = { ...(userProfileCache[newUsernameInput] || {}), ...updates, avatarUrl: avatarUrlInput };
+                applyAvatar(document.getElementById("myAvatar"), newUsernameInput, avatarUrlInput);
                 applyThemeColors(safeThemeName);
                 applyChatBackground(themePresets[safeThemeName].bg);
 
