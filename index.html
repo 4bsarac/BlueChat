@@ -23,10 +23,10 @@
         }
 
         :root {
-            --theme-bg: #070b19;
-            --theme-sidebar: #090e1c;
+            --theme-bg: #0b0f14;
+            --theme-sidebar: #111827;
             --theme-sender-bg: #2563eb;
-            --theme-receiver-bg: #1e293b;
+            --theme-receiver-bg: #1f2937;
             --theme-primary: #3b82f6;
             --theme-primary-hover: #2563eb;
         }
@@ -54,6 +54,129 @@
         @keyframes pulse-ring {
             0% { box-shadow: 0 0 0 0px rgba(59, 130, 246, 0.7); }
             100% { box-shadow: 0 0 0 12px rgba(59, 130, 246, 0); }
+        }
+
+        .chat-row {
+            border-left: 3px solid transparent;
+            transition: background-color 0.18s ease, border-color 0.18s ease, transform 0.18s ease;
+        }
+
+        .chat-row:hover {
+            background: rgba(30, 41, 59, 0.48);
+        }
+
+        .chat-row-active {
+            background: rgba(59, 130, 246, 0.12);
+            border-left-color: var(--theme-primary);
+        }
+
+        .chat-row-unread {
+            background: rgba(59, 130, 246, 0.08);
+            border-left-color: #60a5fa;
+        }
+
+        .message-content {
+            max-width: min(100%, 560px);
+            line-height: 1.5;
+            overflow-wrap: anywhere;
+        }
+
+        .date-divider {
+            align-self: center;
+            background: rgba(15, 23, 42, 0.82);
+            border: 1px solid rgba(148, 163, 184, 0.12);
+            color: #94a3b8;
+            font-size: 10px;
+            font-weight: 700;
+            letter-spacing: 0;
+            padding: 5px 10px;
+            border-radius: 999px;
+            margin: 8px 0 2px;
+        }
+
+        .message-action-menu {
+            position: absolute;
+            right: 16px;
+            bottom: 76px;
+            z-index: 45;
+            display: flex;
+            gap: 6px;
+            padding: 6px;
+            border-radius: 14px;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(15, 23, 42, 0.96);
+            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+        }
+
+        .message-action-menu button,
+        .icon-chip {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+            border-radius: 10px;
+            padding: 8px 10px;
+            color: #cbd5e1;
+            font-size: 11px;
+            font-weight: 700;
+            transition: background-color 0.16s ease, color 0.16s ease;
+        }
+
+        .message-action-menu button:hover,
+        .icon-chip:hover {
+            background: rgba(59, 130, 246, 0.14);
+            color: #fff;
+        }
+
+        .scroll-bottom-btn {
+            position: absolute;
+            right: 18px;
+            bottom: 18px;
+            z-index: 35;
+            width: 42px;
+            height: 42px;
+            border-radius: 999px;
+            background: var(--theme-primary);
+            color: #fff;
+            box-shadow: 0 14px 35px rgba(37, 99, 235, 0.35);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .typing-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+            color: #60a5fa;
+            font-weight: 700;
+        }
+
+        .typing-pill span {
+            width: 4px;
+            height: 4px;
+            border-radius: 999px;
+            background: currentColor;
+            animation: typing-bounce 1s infinite ease-in-out;
+        }
+
+        .typing-pill span:nth-child(2) { animation-delay: 0.12s; }
+        .typing-pill span:nth-child(3) { animation-delay: 0.24s; }
+
+        @keyframes typing-bounce {
+            0%, 80%, 100% { transform: translateY(0); opacity: 0.55; }
+            40% { transform: translateY(-4px); opacity: 1; }
+        }
+
+        @media (max-width: 767px) {
+            #settingsModal { align-items: stretch; padding: 0; }
+            #settingsModal > div {
+                width: 100%;
+                max-width: none;
+                min-height: 100dvh;
+                border-radius: 0;
+                overflow-y: auto;
+            }
         }
     </style>
 </head>
@@ -165,11 +288,17 @@
                 </div>
             </div>
 
-            <!-- Kullanıcı Arama -->
-            <div class="p-3 theme-app border-b border-slate-900/50">
+            <!-- Sohbet ve Kullanıcı Arama -->
+            <div class="p-3 theme-app border-b border-slate-900/50 space-y-2">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input type="text" id="chatSearchField" placeholder="Sohbetlerde ara..." autocomplete="off" autocapitalize="none" spellcheck="false" class="w-full bg-[#131b2e] text-slate-200 pl-9 pr-3 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
+                </div>
                 <div class="flex gap-2">
-                    <input type="text" id="searchUserField" placeholder="Kullanıcı adı ara..." autocomplete="off" autocapitalize="none" spellcheck="false" class="flex-1 bg-[#131b2e] text-slate-200 px-4 py-2.5 rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
-                    <button onclick="startNewChat()" class="theme-btn text-white px-4 py-2.5 rounded-2xl text-xs font-semibold transition-all shadow-md">Sohbet Aç</button>
+                    <input type="text" id="searchUserField" placeholder="Yeni kullanıcı adı..." autocomplete="off" autocapitalize="none" spellcheck="false" class="flex-1 bg-[#131b2e] text-slate-200 px-4 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
+                    <button onclick="startNewChat()" class="theme-btn text-white px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md flex items-center gap-1.5">
+                        <i class="fa-solid fa-plus text-[10px]"></i> Aç
+                    </button>
                 </div>
             </div>
 
@@ -181,17 +310,17 @@
         <!-- SAĞ PANEL: SOHBET PENCERESİ -->
         <div id="activeChatContainer" class="slide-panel absolute md:relative right-0 top-0 h-full w-full md:flex-1 theme-app flex flex-col z-30 transform translate-x-full md:translate-x-0">
             <!-- Sohbet Header -->
-            <div class="p-4 theme-sidebar flex justify-between items-center border-b border-slate-900/60 shrink-0 h-16">
+            <div class="px-4 py-3 theme-sidebar flex justify-between items-center border-b border-slate-900/60 shrink-0 min-h-16">
                 <div class="flex items-center gap-3">
-                    <button onclick="goBackToList()" class="md:hidden text-slate-400 hover:text-white mr-1 transition-colors">
-                        <i class="fa-solid fa-chevron-left text-lg"></i>
+                    <button onclick="goBackToList()" title="Sohbet listesine dön" class="md:hidden w-10 h-10 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl flex items-center justify-center transition-colors">
+                        <i class="fa-solid fa-arrow-left text-sm"></i>
                     </button>
-                    <div id="activeAvatar" class="w-10 h-10 theme-btn rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-md">
+                    <div id="activeAvatar" class="w-10 h-10 theme-btn rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md">
                         -
                     </div>
                     <div class="cursor-pointer" onclick="toggleChatActionsMenu()">
                         <h3 id="activeChatName" class="font-bold text-white text-sm tracking-tight flex items-center gap-1.5">
-                            <span>-</span> <i class="fa-solid fa-caret-down text-[10px] text-slate-400"></i>
+                            <span>-</span>
                         </h3>
                         <p id="activeChatStatus" class="text-[10px] text-slate-400">Yükleniyor...</p>
                     </div>
@@ -214,6 +343,14 @@
             <div id="chatBackground" class="flex-1 overflow-y-auto p-4 flex flex-col justify-end bg-cover bg-center transition-all relative">
                 <div id="messageContainer" class="space-y-3 overflow-y-auto pr-1">
                 </div>
+                <button id="scrollBottomBtn" onclick="scrollActiveChatToBottom()" class="scroll-bottom-btn hidden" title="En alta in">
+                    <i class="fa-solid fa-arrow-down"></i>
+                </button>
+                <div id="messageActionMenu" class="message-action-menu hidden">
+                    <button onclick="replySelectedMessage()" title="Yanıtla"><i class="fa-solid fa-reply"></i> Yanıtla</button>
+                    <button onclick="copySelectedMessage()" title="Kopyala"><i class="fa-regular fa-copy"></i> Kopyala</button>
+                    <button onclick="deleteSelectedMessageForMe()" class="text-red-300 hover:text-red-100" title="Sil"><i class="fa-regular fa-trash-can"></i> Sil</button>
+                </div>
             </div>
 
             <!-- ZARİF YANIT VERME ÖNİZLEME ALANI -->
@@ -226,9 +363,9 @@
             </div>
 
             <!-- Sabit Mesaj Giriş Alanı -->
-            <div class="p-4 theme-sidebar border-t border-slate-900/60 flex items-center gap-3 shrink-0">
-                <input type="text" id="messageInput" onkeypress="handleKeyPress(event)" placeholder="Bir mesaj yazın..." class="flex-1 bg-[#131b2e] text-slate-100 px-5 py-3.5 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm transition-all">
-                <button onclick="sendMessage()" class="w-12 h-12 theme-btn active:scale-95 text-white rounded-2xl flex items-center justify-center transition-all shadow-md">
+            <div class="px-4 py-3 theme-sidebar border-t border-slate-900/60 flex items-end gap-3 shrink-0">
+                <textarea id="messageInput" rows="1" placeholder="Bir mesaj yazın..." class="flex-1 max-h-32 resize-none bg-[#131b2e] text-slate-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm transition-all leading-relaxed"></textarea>
+                <button onclick="sendMessage()" class="w-11 h-11 theme-btn active:scale-95 text-white rounded-xl flex items-center justify-center transition-all shadow-md shrink-0">
                     <i class="fa-solid fa-paper-plane text-sm pl-0.5"></i>
                 </button>
             </div>
@@ -254,9 +391,16 @@
                 <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
+            <div class="flex gap-2 overflow-x-auto pb-1">
+                <button onclick="switchSettingsTab('profile')" data-settings-tab="profile" class="settings-tab bg-blue-600 text-white px-3 py-2 rounded-xl text-xs font-bold shrink-0">Profil</button>
+                <button onclick="switchSettingsTab('security')" data-settings-tab="security" class="settings-tab bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">Güvenlik</button>
+                <button onclick="switchSettingsTab('theme')" data-settings-tab="theme" class="settings-tab bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">Tema</button>
+                <button onclick="switchSettingsTab('notifications')" data-settings-tab="notifications" class="settings-tab bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">Bildirimler</button>
+            </div>
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <!-- Profil Düzenleme -->
-                <div class="space-y-4">
+                <div data-settings-panel="profile" class="space-y-4 md:col-span-2">
                     <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Kullanıcı Profil Bilgisi</h4>
                     
                     <div>
@@ -269,16 +413,27 @@
                         <label class="block text-[10px] text-slate-500 mb-1 font-semibold">Giriş PIN Şifresi</label>
                         <input type="password" id="settingsPinInput" placeholder="Değiştirmek istemiyorsanız boş bırakın" maxlength="32" autocomplete="new-password" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
                     </div>
+                </div>
 
-                    <div>
-                        <button onclick="registerBiometric()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-2 rounded-xl text-xs font-bold flex items-center justify-center gap-1 transition-colors">
-                            <i class="fa-solid fa-fingerprint text-blue-400"></i> Yeni Parmak İzi Tanımla
-                        </button>
+                <div data-settings-panel="security" class="hidden space-y-4 md:col-span-2">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Güvenlik Durumu</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                            <span class="block text-[10px] text-slate-500 font-bold uppercase mb-1">Biyometri</span>
+                            <span id="biometricStatusText" class="text-sm text-slate-200 font-bold">Kontrol ediliyor</span>
+                        </div>
+                        <div class="bg-slate-950 border border-slate-800 rounded-xl p-4">
+                            <span class="block text-[10px] text-slate-500 font-bold uppercase mb-1">Şifre</span>
+                            <span class="text-sm text-slate-200 font-bold">4-32 karakter</span>
+                        </div>
                     </div>
+                    <button onclick="registerBiometric()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                        <i class="fa-solid fa-fingerprint text-blue-400"></i> Yeni Parmak İzi Tanımla
+                    </button>
                 </div>
 
                 <!-- Önizlemeli Tema Seçimi -->
-                <div class="space-y-4 flex flex-col justify-between">
+                <div data-settings-panel="theme" class="hidden space-y-4 flex flex-col justify-between md:col-span-2">
                     <div>
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tema Şablonu Seçin</h4>
                         <div class="grid grid-cols-2 gap-2">
@@ -297,6 +452,20 @@
                             <div class="px-2.5 py-1.5 text-[10px] rounded-lg max-w-[80%] self-end text-white shadow" id="previewSenderBubble" style="background-color: #2563eb;">Gönderen Mesajı</div>
                             <div class="px-2.5 py-1.5 text-[10px] rounded-lg max-w-[80%] self-start text-slate-200 shadow" id="previewReceiverBubble" style="background-color: #1e293b;">Alıcı Mesajı</div>
                         </div>
+                    </div>
+                </div>
+
+                <div data-settings-panel="notifications" class="hidden space-y-4 md:col-span-2">
+                    <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider">Bildirimler</h4>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                        <label class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-3">
+                            <span class="text-xs text-slate-300 font-bold">Masaüstü bildirimi</span>
+                            <input type="checkbox" id="desktopNotificationsToggle" class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500">
+                        </label>
+                        <label class="bg-slate-950 border border-slate-800 rounded-xl p-4 flex items-center justify-between gap-3">
+                            <span class="text-xs text-slate-300 font-bold">Sesli bildirim</span>
+                            <input type="checkbox" id="soundNotificationsToggle" checked class="w-4 h-4 rounded border-slate-700 bg-slate-900 text-blue-600 focus:ring-blue-500">
+                        </label>
                     </div>
                 </div>
             </div>
@@ -464,7 +633,56 @@
                 requestAnimationFrame(() => {
                     if (messageContainer) messageContainer.scrollTop = messageContainer.scrollHeight;
                     if (chatBackground) chatBackground.scrollTop = chatBackground.scrollHeight;
+                    document.getElementById("scrollBottomBtn")?.classList.add("hidden");
                 });
+            });
+        }
+
+        function isChatNearBottom() {
+            const messageContainer = document.getElementById("messageContainer");
+            if (!messageContainer) return true;
+            return messageContainer.scrollHeight - messageContainer.scrollTop - messageContainer.clientHeight < 120;
+        }
+
+        function updateScrollBottomButton() {
+            const btn = document.getElementById("scrollBottomBtn");
+            if (!btn) return;
+            btn.classList.toggle("hidden", isChatNearBottom());
+        }
+
+        function resizeMessageInput() {
+            const input = document.getElementById("messageInput");
+            if (!input) return;
+            input.style.height = "auto";
+            input.style.height = `${Math.min(input.scrollHeight, 128)}px`;
+        }
+
+        function formatDateDivider(timestamp) {
+            if (!timestamp) return "";
+            const date = new Date(timestamp);
+            const today = new Date();
+            const yesterday = new Date();
+            yesterday.setDate(today.getDate() - 1);
+
+            if (date.toDateString() === today.toDateString()) return "Bugün";
+            if (date.toDateString() === yesterday.toDateString()) return "Dün";
+
+            return date.toLocaleDateString("tr-TR", {
+                day: "numeric",
+                month: "long"
+            });
+        }
+
+        function dateKey(timestamp) {
+            if (!timestamp) return "";
+            const date = new Date(timestamp);
+            return `${date.getFullYear()}-${date.getMonth()}-${date.getDate()}`;
+        }
+
+        function filterVisibleChatRows() {
+            document.querySelectorAll("[data-chat-partner]").forEach((row) => {
+                const partner = row.getAttribute("data-chat-partner") || "";
+                row.classList.toggle("hidden", Boolean(chatSearchTerm && !partner.includes(chatSearchTerm)));
             });
         }
 
@@ -485,7 +703,7 @@
 
         // Tema Şablonları
         const themePresets = {
-            sapphire: { bg: "#070b19", sidebar: "#090e1c", sender: "#2563eb", receiver: "#1e293b", primary: "#3b82f6", hover: "#2563eb" },
+            sapphire: { bg: "#0b0f14", sidebar: "#111827", sender: "#2563eb", receiver: "#1f2937", primary: "#3b82f6", hover: "#2563eb" },
             emerald: { bg: "#041410", sidebar: "#061f19", sender: "#059669", receiver: "#112620", primary: "#10b981", hover: "#059669" },
             monochrome: { bg: "#0c0d0f", sidebar: "#13151a", sender: "#374151", receiver: "#1f2937", primary: "#4b5563", hover: "#374151" },
             purple: { bg: "#0a0514", sidebar: "#110921", sender: "#7c3aed", receiver: "#1c1133", primary: "#8b5cf6", hover: "#7c3aed" },
@@ -499,6 +717,10 @@
         let currentChatUserKey = null;
         let activeChatId = null;
         let otherUser = null;
+        let chatSearchTerm = "";
+        let selectedMessageAction = null;
+        let shouldScrollOnNextMessages = false;
+        let soundNotificationsEnabled = true;
         let unsubMessages = null;
         let unsubStatus = null;
         let unsubChatList = null;
@@ -532,6 +754,7 @@
 
         // Kodla Sentezlenen Çok Sesli Çift Bip (Chirp) Bildirimi
         function playNotificationSound() {
+            if (!soundNotificationsEnabled) return;
             try {
                 initAudioContext();
                 if (!audioCtx) return;
@@ -1116,16 +1339,46 @@
             }
         }
 
+        function switchSettingsTab(tabName) {
+            document.querySelectorAll("[data-settings-panel]").forEach((panel) => {
+                panel.classList.toggle("hidden", panel.getAttribute("data-settings-panel") !== tabName);
+            });
+
+            document.querySelectorAll("[data-settings-tab]").forEach((tab) => {
+                const isActive = tab.getAttribute("data-settings-tab") === tabName;
+                tab.classList.toggle("bg-blue-600", isActive);
+                tab.classList.toggle("text-white", isActive);
+                tab.classList.toggle("bg-slate-800", !isActive);
+                tab.classList.toggle("text-slate-300", !isActive);
+            });
+        }
+
+        function updateBiometricStatusText(userData = {}) {
+            const el = document.getElementById("biometricStatusText");
+            if (!el) return;
+            const hasCredential = Array.isArray(userData.credentials) && userData.credentials.length > 0;
+            el.innerText = hasCredential ? "Tanımlı" : "Tanımlı değil";
+            el.className = hasCredential ? "text-sm text-emerald-400 font-bold" : "text-sm text-amber-400 font-bold";
+        }
+
         function openSettingsModal() {
             document.getElementById("settingsModal").classList.remove("hidden");
+            switchSettingsTab("profile");
             document.getElementById("settingsUsernameInput").value = currentUser;
             document.getElementById("settingsPinInput").value = "";
             document.getElementById("usernameChangeError").classList.add("hidden");
+            const desktopToggle = document.getElementById("desktopNotificationsToggle");
+            if (desktopToggle && "Notification" in window) {
+                desktopToggle.checked = Notification.permission === "granted";
+            }
+            const soundToggle = document.getElementById("soundNotificationsToggle");
+            if (soundToggle) soundToggle.checked = soundNotificationsEnabled;
             
             db.collection("users").doc(currentUser).get().then(doc => {
                 if (doc.exists) {
                     const data = doc.data();
                     const activeTheme = data.theme || "sapphire";
+                    updateBiometricStatusText(data);
                     previewTheme(activeTheme);
                 }
             });
@@ -1241,6 +1494,8 @@
             activeChatId = chatId;
             otherUser = targetUserDoc;
             currentChatUserKey = chatUserKey;
+            shouldScrollOnNextMessages = true;
+            closeMessageActionMenu();
 
             currentMobileView = 'chat'; 
             updateMobileLayout();
@@ -1254,9 +1509,7 @@
             activeName.textContent = "";
             const activeNameText = document.createElement("span");
             activeNameText.innerText = `@${targetUserDoc.toUpperCase()}`;
-            const activeNameIcon = document.createElement("i");
-            activeNameIcon.className = "fa-solid fa-caret-down text-[10px] text-slate-400";
-            activeName.append(activeNameText, activeNameIcon);
+            activeName.append(activeNameText);
             document.getElementById("activeAvatar").innerText = targetUserDoc.substring(0, 2).toUpperCase();
 
             cancelReply();
@@ -1285,6 +1538,50 @@
             replyingToSender = null;
             replyingToText = null;
             document.getElementById("replyPreviewBar").classList.add("hidden");
+        }
+
+        function openMessageActionMenu(msgId, sender, text) {
+            selectedMessageAction = { msgId, sender, text };
+            const menu = document.getElementById("messageActionMenu");
+            if (menu) menu.classList.remove("hidden");
+        }
+
+        function closeMessageActionMenu() {
+            selectedMessageAction = null;
+            document.getElementById("messageActionMenu")?.classList.add("hidden");
+        }
+
+        function replySelectedMessage() {
+            if (!selectedMessageAction) return;
+            triggerReply(selectedMessageAction.msgId, selectedMessageAction.sender, selectedMessageAction.text);
+            closeMessageActionMenu();
+        }
+
+        async function copySelectedMessage() {
+            if (!selectedMessageAction) return;
+            try {
+                await navigator.clipboard.writeText(selectedMessageAction.text);
+            } catch {
+                const temp = document.createElement("textarea");
+                temp.value = selectedMessageAction.text;
+                document.body.appendChild(temp);
+                temp.select();
+                document.execCommand("copy");
+                temp.remove();
+            }
+            closeMessageActionMenu();
+        }
+
+        async function deleteSelectedMessageForMe() {
+            if (!selectedMessageAction || !activeChatId || !currentUser) return;
+            try {
+                await db.collection("chats").doc(activeChatId).collection("messages").doc(selectedMessageAction.msgId).update({
+                    deletedFor: firebase.firestore.FieldValue.arrayUnion(currentChatUserKey || currentUser)
+                });
+            } catch (err) {
+                console.error("Mesaj silme hatası:", err);
+            }
+            closeMessageActionMenu();
         }
 
         document.getElementById("replyPreviewBar").addEventListener("click", (e) => {
@@ -1318,6 +1615,7 @@
             
             unsubMessages = messagesRef.orderBy("timestamp", "desc").limit(50).onSnapshot((snapshot) => {
                 const container = document.getElementById("messageContainer");
+                const wasNearBottom = isChatNearBottom();
                 container.innerHTML = "";
 
                 const batch = db.batch();
@@ -1327,15 +1625,17 @@
                 snapshot.forEach((doc) => {
                     const msg = doc.data();
                     if (msg.timestamp <= clearTime) return;
+                    if (Array.isArray(msg.deletedFor) && msg.deletedFor.includes(chatUserKey)) return;
                     msgsArray.unshift({ id: doc.id, ref: doc.ref, ...msg });
                 });
 
+                let lastRenderedDateKey = "";
                 msgsArray.forEach((msg) => {
                     const isMe = currentUserAliases.includes(msg.sender);
                     const bgStyle = isMe 
                         ? "background-color: var(--theme-sender-bg); color: #ffffff;" 
                         : "background-color: var(--theme-receiver-bg); color: #f1f5f9;";
-                    const roundedStyle = isMe ? "rounded-tr-none" : "rounded-tl-none";
+                    const roundedStyle = isMe ? "rounded-br-md" : "rounded-bl-md";
 
                     let ticks = "";
                     if (isMe) {
@@ -1356,6 +1656,12 @@
                     const msgIdAttr = escapeAttr(msg.id);
                     const senderAttr = escapeAttr(msg.sender);
                     const messageAttr = escapeAttr(messageText);
+                    const currentDateKey = dateKey(msg.timestamp);
+
+                    if (currentDateKey && currentDateKey !== lastRenderedDateKey) {
+                        container.insertAdjacentHTML("beforeend", `<div class="date-divider">${escapeHtml(formatDateDivider(msg.timestamp))}</div>`);
+                        lastRenderedDateKey = currentDateKey;
+                    }
 
                     let replyBlockHtml = "";
                     if (msg.replyToId) {
@@ -1371,8 +1677,8 @@
                     }
 
                     const msgHtml = `
-                        <div id="msg_${msgIdAttr}" class="flex flex-col max-w-[80%] ${isMe ? 'ml-auto items-end' : 'items-start'} transition-all duration-300 rounded-2xl">
-                            <div class="message-content px-3.5 py-2 rounded-2xl ${roundedStyle} shadow-lg border border-white/5 cursor-pointer transition-all" style="${bgStyle}" data-msg-id="${msgIdAttr}" data-msg-sender="${senderAttr}" data-msg-text="${messageAttr}">
+                        <div id="msg_${msgIdAttr}" class="flex flex-col max-w-[82%] ${isMe ? 'ml-auto items-end' : 'items-start'} transition-all duration-300">
+                            <div class="message-content px-3.5 py-2.5 rounded-2xl ${roundedStyle} shadow-md border border-white/5 cursor-pointer transition-all hover:brightness-110" style="${bgStyle}" data-msg-id="${msgIdAttr}" data-msg-sender="${senderAttr}" data-msg-text="${messageAttr}">
                                 ${replyBlockHtml}
                                 <p class="text-[13px] leading-relaxed whitespace-pre-line">${escapeHtml(messageText)}</p>
                                 <div class="flex items-center justify-end gap-1 mt-1 text-[8px] ${isMe ? 'text-blue-200' : 'text-slate-400'}">
@@ -1385,6 +1691,9 @@
                     container.insertAdjacentHTML("beforeend", msgHtml);
                     const renderedMessage = container.lastElementChild;
                     const contentEl = renderedMessage?.querySelector(".message-content");
+                    contentEl?.addEventListener("click", () => {
+                        openMessageActionMenu(msg.id, msg.sender, messageText);
+                    });
                     contentEl?.addEventListener("dblclick", () => {
                         triggerReply(msg.id, msg.sender, messageText);
                     });
@@ -1401,7 +1710,12 @@
                     db.collection("chats").doc(activeChatId).update({ lastMessageStatus: "read" });
                 }
 
-                scrollActiveChatToBottom();
+                if (shouldScrollOnNextMessages || wasNearBottom) {
+                    scrollActiveChatToBottom();
+                    shouldScrollOnNextMessages = false;
+                } else {
+                    updateScrollBottomButton();
+                }
             });
         }
 
@@ -1425,8 +1739,8 @@
                 const isOtherTyping = chatData.typing && chatData.typing[otherUser];
 
                 if (isOtherTyping) {
-                    statusEl.innerText = "Yazıyor...";
-                    statusEl.className = "text-[10px] text-sky-400 animate-pulse font-semibold";
+                    statusEl.innerHTML = 'Yazıyor <span class="typing-pill ml-1"><span></span><span></span><span></span></span>';
+                    statusEl.className = "text-[10px] text-sky-400 font-semibold flex items-center";
                 } else {
                     const otherDoc = await db.collection("users").doc(otherUser).get();
                     if (otherDoc.exists) {
@@ -1478,6 +1792,7 @@
                 });
 
                 input.value = "";
+                resizeMessageInput();
                 cancelReply();
                 input.focus();
                 scrollActiveChatToBottom();
@@ -1497,9 +1812,17 @@
 
         const inputField = document.getElementById("messageInput");
         inputField.addEventListener("input", () => {
+            resizeMessageInput();
             setTypingStatus(true);
             clearTimeout(typingTimeout);
             typingTimeout = setTimeout(() => { setTypingStatus(false); }, 2000);
+        });
+
+        inputField.addEventListener("keydown", (event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+                event.preventDefault();
+                sendMessage();
+            }
         });
 
         document.getElementById("pinInput").addEventListener("keydown", (event) => {
@@ -1512,6 +1835,28 @@
 
         document.getElementById("searchUserField").addEventListener("keydown", (event) => {
             if (event.key === "Enter") startNewChat();
+        });
+
+        document.getElementById("chatSearchField").addEventListener("input", (event) => {
+            chatSearchTerm = event.target.value.trim().toLowerCase();
+            filterVisibleChatRows();
+        });
+
+        document.getElementById("messageContainer").addEventListener("scroll", updateScrollBottomButton);
+        document.getElementById("chatBackground").addEventListener("click", (event) => {
+            if (!event.target.closest(".message-content") && !event.target.closest("#messageActionMenu")) {
+                closeMessageActionMenu();
+            }
+        });
+
+        document.getElementById("soundNotificationsToggle")?.addEventListener("change", (event) => {
+            soundNotificationsEnabled = event.target.checked;
+        });
+
+        document.getElementById("desktopNotificationsToggle")?.addEventListener("change", async (event) => {
+            if (event.target.checked) {
+                await requestNotificationPermission();
+            }
         });
 
         // Sohbet Listesi ve Gerçek Zamanlı Akıllı Bildirim Motoru
@@ -1543,13 +1888,14 @@
                         const isHiddenForMe = chat.hiddenBy && chat.hiddenBy[myChatKey];
                         if (isHiddenForMe) return;
 
-                        hasChat = true;
                         const partner = chat.users.find(u => u !== myChatKey);
                         if (!partner) return;
+                        hasChat = true;
                         const lastMsgText = sanitizeMessageText(chat.lastMessageText || "Henüz mesaj yok");
                         const lastSender = chat.lastMessageSender;
                         const lastStatus = chat.lastMessageStatus;
                         const unreadCount = Math.max(0, Number((chat.unreadCounts && chat.unreadCounts[myChatKey]) || 0));
+                        const isPartnerTyping = chat.typing && chat.typing[partner];
 
                         // --- BİLDİRİM TETİKLEME ALGORİTMASI ---
                         const msgTime = chat.lastMessageTime;
@@ -1593,9 +1939,14 @@
                             itemBg = "bg-slate-800/60 border-l-4 border-slate-500";
                         }
 
+                        const previewText = lastMsgText.length > 44 ? `${lastMsgText.slice(0, 44)}...` : lastMsgText;
+                        const previewHtml = isPartnerTyping
+                            ? '<span class="typing-pill">yazıyor <span></span><span></span><span></span></span>'
+                            : `${ticks} ${escapeHtml(previewText)}`;
+
                         const chatHtml = `
-                            <div class="flex items-center gap-3 p-4 border-b border-slate-900/30 cursor-pointer transition-all ${itemBg}">
-                                <div class="w-11 h-11 theme-btn rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow">
+                            <div data-chat-partner="${escapeAttr(partner.toLowerCase())}" class="chat-row ${chat.chatId === activeChatId ? 'chat-row-active' : ''} ${unreadCount > 0 ? 'chat-row-unread' : ''} flex items-center gap-3 p-4 border-b border-slate-900/30 cursor-pointer ${itemBg}">
+                                <div class="w-11 h-11 theme-btn rounded-xl flex items-center justify-center text-white font-bold text-sm shadow">
                                     ${escapeHtml(partner.substring(0,2).toUpperCase())}
                                 </div>
                                 <div class="flex-1 min-w-0">
@@ -1605,7 +1956,7 @@
                                     </div>
                                     <div class="flex items-center justify-between">
                                         <p class="text-[11px] text-slate-400 truncate font-medium flex items-center">
-                                            ${ticks} ${escapeHtml(lastMsgText)}
+                                            ${previewHtml}
                                         </p>
                                         ${unreadBadge}
                                     </div>
@@ -1631,6 +1982,7 @@
                         </div>
                     `;
                 }
+                filterVisibleChatRows();
             }, (err) => {
                 console.error("Sohbet listesi dinleme hatası:", err);
             });
@@ -1700,6 +2052,7 @@
         window.openSettingsModal = openSettingsModal;
         window.closeSettingsModal = closeSettingsModal;
         window.saveAdvancedSettings = saveAdvancedSettings;
+        window.switchSettingsTab = switchSettingsTab;
         window.previewTheme = previewTheme;
         window.togglePinVisibility = togglePinVisibility;
         window.toggleChatActionsMenu = toggleChatActionsMenu;
@@ -1707,6 +2060,10 @@
         window.triggerReply = triggerReply;
         window.cancelReply = cancelReply;
         window.scrollToMessage = scrollToMessage;
+        window.scrollActiveChatToBottom = scrollActiveChatToBottom;
+        window.replySelectedMessage = replySelectedMessage;
+        window.copySelectedMessage = copySelectedMessage;
+        window.deleteSelectedMessageForMe = deleteSelectedMessageForMe;
 
         window.openWallpaperModal = () => document.getElementById("wallpaperModal").classList.remove("hidden");
         window.closeWallpaperModal = () => document.getElementById("wallpaperModal").classList.add("hidden");
