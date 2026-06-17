@@ -80,7 +80,7 @@
                 </div>
                 
                 <div class="relative">
-                    <input type="password" id="pinInput" placeholder="Şifre PIN Kodu" maxlength="6" inputmode="numeric" autocomplete="current-password" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-center text-white tracking-widest focus:outline-none focus:border-blue-500 text-sm transition-all duration-300">
+                    <input type="password" id="pinInput" placeholder="Şifre" maxlength="32" autocomplete="current-password" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-center text-white tracking-widest focus:outline-none focus:border-blue-500 text-sm transition-all duration-300">
                     <button onclick="togglePinVisibility()" type="button" class="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors duration-200">
                         <i id="eyeIcon" class="fa-solid fa-eye text-sm"></i>
                     </button>
@@ -267,7 +267,7 @@
 
                     <div>
                         <label class="block text-[10px] text-slate-500 mb-1 font-semibold">Giriş PIN Şifresi</label>
-                        <input type="password" id="settingsPinInput" placeholder="Değiştirmek istemiyorsanız boş bırakın" maxlength="6" inputmode="numeric" autocomplete="new-password" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
+                        <input type="password" id="settingsPinInput" placeholder="Değiştirmek istemiyorsanız boş bırakın" maxlength="32" autocomplete="new-password" class="w-full bg-[#1e293b] border border-slate-800 rounded-xl px-4 py-2 text-xs text-white focus:outline-none focus:border-blue-500">
                     </div>
 
                     <div>
@@ -351,7 +351,7 @@
 
         // Shared safety helpers
         const USERNAME_PATTERN = /^[a-z0-9_]{3,24}$/;
-        const PIN_PATTERN = /^\d{4,6}$/;
+        const PIN_PATTERN = /^\S{4,32}$/;
         const ALLOWED_BACKGROUND_HOSTS = new Set(["images.unsplash.com"]);
 
         function normalizeUsername(value) {
@@ -456,6 +456,18 @@
             if (el) el.innerText = value;
         }
 
+        function scrollActiveChatToBottom() {
+            const messageContainer = document.getElementById("messageContainer");
+            const chatBackground = document.getElementById("chatBackground");
+
+            requestAnimationFrame(() => {
+                requestAnimationFrame(() => {
+                    if (messageContainer) messageContainer.scrollTop = messageContainer.scrollHeight;
+                    if (chatBackground) chatBackground.scrollTop = chatBackground.scrollHeight;
+                });
+            });
+        }
+
         // Yerel Biyometri Helper Fonksiyonları
         function bufferToBase64(buffer) {
             return btoa(String.fromCharCode(...new Uint8Array(buffer)));
@@ -483,6 +495,8 @@
 
         // Durum Değişkenleri
         let currentUser = null;
+        let currentUserAliases = [];
+        let currentChatUserKey = null;
         let activeChatId = null;
         let otherUser = null;
         let unsubMessages = null;
@@ -754,11 +768,11 @@
                 hasValidationFail = true;
             }
             if (!pin) {
-                pinError.innerText = "PIN zorunludur.";
+                pinError.innerText = "Şifre zorunludur.";
                 pinError.classList.remove("hidden");
                 hasValidationFail = true;
             } else if (!isValidPin(pin)) {
-                pinError.innerText = "PIN 4-6 haneli rakamlardan oluşmalıdır.";
+                pinError.innerText = "Şifre 4-32 karakter olmalıdır ve boşluk içermemelidir.";
                 pinError.classList.remove("hidden");
                 hasValidationFail = true;
             }
@@ -852,7 +866,7 @@
             }
 
             if (!isValidPin(pin)) {
-                document.getElementById("pinError").innerText = "PIN 4-6 haneli rakamlardan oluşmalıdır.";
+                document.getElementById("pinError").innerText = "Şifre 4-32 karakter olmalıdır ve boşluk içermemelidir.";
                 document.getElementById("pinError").classList.remove("hidden");
                 closeRequestModal();
                 return;
@@ -877,6 +891,7 @@
 
         async function successfulLogin(username, userData) {
             currentUser = username;
+            currentUserAliases = Array.from(new Set([username, ...(Array.isArray(userData.oldUsernames) ? userData.oldUsernames : [])]));
             const credentials = userData.credentials || [];
 
             if (credentials.length === 0 && await isPlatformBiometricAvailable()) {
@@ -1043,7 +1058,7 @@
 
             if (pinInput) {
                 if (!isValidPin(pinInput)) {
-                    alert("Yeni PIN 4-6 haneli rakamlardan oluşmalıdır.");
+                    alert("Yeni şifre 4-32 karakter olmalıdır ve boşluk içermemelidir.");
                     return;
                 }
                 updates.pinHash = await hashPin(newUsernameInput, pinInput);
@@ -1121,14 +1136,15 @@
 
         async function deleteChatForMe() {
             if (!activeChatId || !currentUser) return;
+            const chatUserKey = currentChatUserKey || currentUser;
             const confirmDelete = confirm("Bu sohbet geçmişini temizlemek istediğinize emin misiniz?");
             
             if (confirmDelete) {
                 try {
                     const now = Date.now();
                     await db.collection("chats").doc(activeChatId).update({
-                        [`clearTimestamps.${currentUser}`]: now,
-                        [`hiddenBy.${currentUser}`]: true
+                        [`clearTimestamps.${chatUserKey}`]: now,
+                        [`hiddenBy.${chatUserKey}`]: true
                     });
                     
                     document.getElementById("chatActionsMenu").classList.add("hidden");
@@ -1221,16 +1237,17 @@
             }
         }
 
-        async function selectChatRoom(chatId, targetUserDoc) {
+        async function selectChatRoom(chatId, targetUserDoc, chatUserKey = currentUser) {
             activeChatId = chatId;
             otherUser = targetUserDoc;
+            currentChatUserKey = chatUserKey;
 
             currentMobileView = 'chat'; 
             updateMobileLayout();
 
             await db.collection("chats").doc(chatId).update({
-                [`unreadCounts.${currentUser}`]: 0,
-                [`hiddenBy.${currentUser}`]: false 
+                [`unreadCounts.${chatUserKey}`]: 0,
+                [`hiddenBy.${chatUserKey}`]: false 
             });
 
             const activeName = document.getElementById("activeChatName");
@@ -1294,7 +1311,8 @@
 
             const chatSnap = await db.collection("chats").doc(activeChatId).get();
             const chatData = chatSnap.data() || {};
-            const clearTime = (chatData.clearTimestamps && chatData.clearTimestamps[currentUser]) || 0;
+            const chatUserKey = currentChatUserKey || currentUser;
+            const clearTime = (chatData.clearTimestamps && chatData.clearTimestamps[chatUserKey]) || 0;
 
             const messagesRef = db.collection("chats").doc(activeChatId).collection("messages");
             
@@ -1313,7 +1331,7 @@
                 });
 
                 msgsArray.forEach((msg) => {
-                    const isMe = msg.sender === currentUser;
+                    const isMe = currentUserAliases.includes(msg.sender);
                     const bgStyle = isMe 
                         ? "background-color: var(--theme-sender-bg); color: #ffffff;" 
                         : "background-color: var(--theme-receiver-bg); color: #f1f5f9;";
@@ -1383,9 +1401,7 @@
                     db.collection("chats").doc(activeChatId).update({ lastMessageStatus: "read" });
                 }
 
-                setTimeout(() => {
-                    document.getElementById("chatBackground").scrollTop = document.getElementById("chatBackground").scrollHeight;
-                }, 50);
+                scrollActiveChatToBottom();
             });
         }
 
@@ -1464,6 +1480,7 @@
                 input.value = "";
                 cancelReply();
                 input.focus();
+                scrollActiveChatToBottom();
             } catch (err) {
                 console.error(err);
             }
@@ -1503,10 +1520,7 @@
             lastProcessedTimes = {};
             let isInitialSnapshot = true;
 
-            unsubChatList = db.collection("chats")
-                .where("users", "array-contains", currentUser)
-                .orderBy("lastMessageTime", "desc")
-                .onSnapshot((snapshot) => {
+            unsubChatList = db.collection("chats").orderBy("lastMessageTime", "desc").onSnapshot((snapshot) => {
                 const listContainer = document.getElementById("chatList");
                 listContainer.innerHTML = "";
                 let hasChat = false;
@@ -1521,17 +1535,21 @@
 
                 snapshot.forEach((doc) => {
                     const chat = doc.data();
-                    if (Array.isArray(chat.users) && chat.users.includes(currentUser)) {
-                        const isHiddenForMe = chat.hiddenBy && chat.hiddenBy[currentUser];
+                    const myChatKey = Array.isArray(chat.users)
+                        ? chat.users.find(user => currentUserAliases.includes(user))
+                        : null;
+
+                    if (myChatKey) {
+                        const isHiddenForMe = chat.hiddenBy && chat.hiddenBy[myChatKey];
                         if (isHiddenForMe) return;
 
                         hasChat = true;
-                        const partner = chat.users.find(u => u !== currentUser);
+                        const partner = chat.users.find(u => u !== myChatKey);
                         if (!partner) return;
                         const lastMsgText = sanitizeMessageText(chat.lastMessageText || "Henüz mesaj yok");
                         const lastSender = chat.lastMessageSender;
                         const lastStatus = chat.lastMessageStatus;
-                        const unreadCount = Math.max(0, Number((chat.unreadCounts && chat.unreadCounts[currentUser]) || 0));
+                        const unreadCount = Math.max(0, Number((chat.unreadCounts && chat.unreadCounts[myChatKey]) || 0));
 
                         // --- BİLDİRİM TETİKLEME ALGORİTMASI ---
                         const msgTime = chat.lastMessageTime;
@@ -1558,7 +1576,7 @@
                         }
 
                         let ticks = "";
-                        if (lastSender === currentUser) {
+                        if (currentUserAliases.includes(lastSender)) {
                             if (lastStatus === "sent") {
                                 ticks = '<i class="fa-solid fa-check text-slate-500 text-[10px] mr-1"></i>';
                             } else if (lastStatus === "read") {
@@ -1597,7 +1615,7 @@
                         listContainer.insertAdjacentHTML("beforeend", chatHtml);
 
                         listContainer.lastElementChild?.addEventListener("click", () => {
-                            selectChatRoom(chat.chatId, partner);
+                            selectChatRoom(chat.chatId, partner, myChatKey);
                         });
                     }
                 });
@@ -1653,7 +1671,7 @@
             resetRealtimeListeners();
             stopTitleFlash();
             localStorage.removeItem("remembered_user");
-            currentUser = null; activeChatId = null; otherUser = null; currentMobileView = 'list';
+            currentUser = null; currentUserAliases = []; currentChatUserKey = null; activeChatId = null; otherUser = null; currentMobileView = 'list';
             document.getElementById("chatList").innerHTML = "";
             document.getElementById("messageContainer").innerHTML = "";
             document.getElementById("lockScreen").classList.remove("hidden");
