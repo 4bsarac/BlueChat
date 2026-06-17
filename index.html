@@ -225,7 +225,6 @@
                 <button onclick="cancelReply()" class="text-slate-400 hover:text-white p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
-            <!-- Sabit Mesaj Giriş Alanı -->
             <div class="p-4 theme-sidebar border-t border-slate-900/60 flex items-center gap-3 shrink-0">
                 <input type="text" id="messageInput" onkeypress="handleKeyPress(event)" placeholder="Bir mesaj yazın..." class="flex-1 bg-[#131b2e] text-slate-100 px-5 py-3.5 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm transition-all">
                 <button onclick="sendMessage()" class="w-12 h-12 theme-btn active:scale-95 text-white rounded-2xl flex items-center justify-center transition-all shadow-md">
@@ -291,6 +290,7 @@
                         </div>
                     </div>
 
+                    <!-- Canlı Tema Önizleme Alanı -->
                     <div class="border border-slate-800 p-3 rounded-2xl flex flex-col gap-2 bg-slate-950">
                         <span class="text-[9px] text-slate-500 uppercase font-bold tracking-wider block">Tema Önizlemesi</span>
                         <div id="themePreviewBox" class="rounded-xl p-3 flex flex-col gap-2 h-24 overflow-hidden transition-all" style="background-color: #070b19;">
@@ -333,7 +333,7 @@
         </div>
     </div>
 
-    <!-- JAVASCRIPT GÜVENLİK VE VERİ MANTIĞI -->
+    <!-- SCRIPT ALANI -->
     <script>
         // Firebase Konfigürasyonu
         const firebaseConfig = {
@@ -503,26 +503,6 @@
                         [`unreadCounts.${currentUser}`]: 0
                     });
                 }
-            }
-        });
-
-        // Sayfa Yüklendiğinde Beni Hatırla Kontrolü ve Güvenli Tetikleyici
-        window.addEventListener("DOMContentLoaded", () => {
-            const rememberedUser = localStorage.getItem("remembered_user");
-            if (rememberedUser) {
-                document.getElementById("loginFormFields").classList.add("hidden");
-                document.getElementById("loginSubtitle").classList.add("hidden");
-                
-                const container = document.getElementById("autoLoginContainer");
-                const msg = document.getElementById("autoLoginMsg");
-                container.classList.remove("hidden");
-                
-                msg.innerHTML = `
-                    <span class="block mb-2">@${rememberedUser.toUpperCase()} hesabı algılandı.</span>
-                    <button onclick="autoBiometricLogin('${rememberedUser}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-xl font-bold transition-all shadow-md">
-                        <i class="fa-solid fa-fingerprint mr-1"></i> Dokun ve Giriş Yap
-                    </button>
-                `;
             }
         });
 
