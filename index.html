@@ -137,12 +137,11 @@
         </div>
     </div>
 
-    <!-- ANA UYGULAMA PANELİ -->
+    <!-- ANA PANEL -->
     <div class="flex h-full w-full relative overflow-hidden">
         
-        <!-- SOL PANEL: SOHBET LİSTESİ -->
+        <!-- SOHBET LİSTESİ -->
         <div id="sidebar" class="slide-panel absolute md:relative left-0 top-0 h-full w-full md:w-80 lg:w-96 theme-sidebar border-r border-slate-900/60 flex flex-col z-20 transform translate-x-0">
-            <!-- Profil ve Hızlı Araçlar -->
             <div class="p-4 theme-app flex justify-between items-center border-b border-slate-900/60">
                 <div class="flex items-center gap-3">
                     <div class="w-10 h-10 theme-btn rounded-2xl flex items-center justify-center text-white font-bold text-base shadow-md shadow-blue-500/10" id="myAvatar">
@@ -165,7 +164,6 @@
                 </div>
             </div>
 
-            <!-- Kullanıcı Arama -->
             <div class="p-3 theme-app border-b border-slate-900/50">
                 <div class="flex gap-2">
                     <input type="text" id="searchUserField" placeholder="Kullanıcı adı ara..." class="flex-1 bg-[#131b2e] text-slate-200 px-4 py-2.5 rounded-2xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
@@ -173,14 +171,12 @@
                 </div>
             </div>
 
-            <!-- Sohbet Listesi Container -->
             <div class="flex-1 overflow-y-auto" id="chatList">
             </div>
         </div>
 
-        <!-- SAĞ PANEL: SOHBET PENCERESİ -->
+        <!-- SOHBET PENCERESİ -->
         <div id="activeChatContainer" class="slide-panel absolute md:relative right-0 top-0 h-full w-full md:flex-1 theme-app flex flex-col z-30 transform translate-x-full md:translate-x-0">
-            <!-- Sohbet Header -->
             <div class="p-4 theme-sidebar flex justify-between items-center border-b border-slate-900/60 shrink-0 h-16">
                 <div class="flex items-center gap-3">
                     <button onclick="goBackToList()" class="md:hidden text-slate-400 hover:text-white mr-1 transition-colors">
@@ -189,7 +185,6 @@
                     <div id="activeAvatar" class="w-10 h-10 theme-btn rounded-2xl flex items-center justify-center text-white font-bold text-sm shadow-md">
                         -
                     </div>
-                    <!-- Üst Başlığa Tıklayınca Sohbeti Temizleme Seçeneği Gelir -->
                     <div class="cursor-pointer" onclick="toggleChatActionsMenu()">
                         <h3 id="activeChatName" class="font-bold text-white text-sm tracking-tight flex items-center gap-1.5">
                             <span>-</span> <i class="fa-solid fa-caret-down text-[10px] text-slate-400"></i>
@@ -204,20 +199,18 @@
                 </div>
             </div>
 
-            <!-- Üst İsim Tıklama Menüsü -->
             <div id="chatActionsMenu" class="hidden absolute top-16 left-4 bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow-2xl z-40 w-48 animate-fade-in">
                 <button onclick="deleteChatForMe()" class="w-full text-left text-red-400 hover:bg-red-500/10 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-trash-can"></i> Sohbeti Temizle (Sil)
                 </button>
             </div>
 
-            <!-- Mesaj Listesi -->
             <div id="chatBackground" class="flex-1 overflow-y-auto p-4 flex flex-col justify-end bg-cover bg-center transition-all relative">
                 <div id="messageContainer" class="space-y-3 overflow-y-auto pr-1">
                 </div>
             </div>
 
-            <!-- ZARİF YANIT VERME ÖNİZLEME ALANI -->
+            <!-- YANIT VERME ÖNİZLEME ALANI -->
             <div id="replyPreviewBar" class="hidden px-5 py-3 bg-[#0c1224] border-t border-slate-900 flex items-center justify-between shrink-0 rounded-t-2xl animate-fade-in">
                 <div class="border-l-2 border-blue-500 pl-3 min-w-0">
                     <span id="replyPreviewUser" class="text-[10px] text-blue-400 font-bold block">@AHMET</span>
@@ -226,7 +219,6 @@
                 <button onclick="cancelReply()" class="text-slate-400 hover:text-white p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
-            <!-- Sabit Mesaj Giriş Alanı -->
             <div class="p-4 theme-sidebar border-t border-slate-900/60 flex items-center gap-3 shrink-0">
                 <input type="text" id="messageInput" onkeypress="handleKeyPress(event)" placeholder="Bir mesaj yazın..." class="flex-1 bg-[#131b2e] text-slate-100 px-5 py-3.5 rounded-2xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm transition-all">
                 <button onclick="sendMessage()" class="w-12 h-12 theme-btn active:scale-95 text-white rounded-2xl flex items-center justify-center transition-all shadow-md">
@@ -235,7 +227,6 @@
             </div>
         </div>
 
-        <!-- BOŞ EKRAN -->
         <div class="flex-1 hidden md:flex flex-col items-center justify-center theme-app text-slate-500 z-10" id="welcomeScreen">
             <div class="text-center space-y-4">
                 <div class="w-20 h-20 bg-blue-600/5 border border-blue-500/10 text-blue-500/80 rounded-[2rem] flex items-center justify-center mx-auto text-3xl shadow-xl">
@@ -247,7 +238,7 @@
         </div>
     </div>
 
-    <!-- MODAL: AYARLAR PANELİ -->
+    <!-- AYARLAR PANELİ -->
     <div id="settingsModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-md z-40 flex items-center justify-center p-4">
         <div class="bg-[#0f172a] border border-slate-800 p-6 rounded-[2.5rem] w-full max-w-lg shadow-2xl flex flex-col gap-6 animate-fade-in">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
@@ -278,7 +269,6 @@
                     </div>
                 </div>
 
-                <!-- Önizlemeli Tema Seçimi -->
                 <div class="space-y-4 flex flex-col justify-between">
                     <div>
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tema Şablonu Seçin</h4>
@@ -292,7 +282,6 @@
                         </div>
                     </div>
 
-                    <!-- Canlı Tema Önizleme Alanı -->
                     <div class="border border-slate-800 p-3 rounded-2xl flex flex-col gap-2 bg-slate-950">
                         <span class="text-[9px] text-slate-500 uppercase font-bold tracking-wider block">Tema Önizlemesi</span>
                         <div id="themePreviewBox" class="rounded-xl p-3 flex flex-col gap-2 h-24 overflow-hidden transition-all" style="background-color: #070b19;">
@@ -310,7 +299,7 @@
         </div>
     </div>
 
-    <!-- MODAL: DUVAR KAĞIDI SEÇİMİ -->
+    <!-- DUVAR KAĞIDI MODALI -->
     <div id="wallpaperModal" class="hidden fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center p-4">
         <div class="bg-[#0f172a] border border-slate-800 p-6 rounded-[2rem] w-full max-w-md shadow-2xl">
             <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
@@ -335,7 +324,7 @@
         </div>
     </div>
 
-    <!-- SCRIPT ALANI -->
+    <!-- JAVASCRIPT GÜVENLİK VE VERİ MANTIĞI -->
     <script>
         // Firebase Konfigürasyonu
         const firebaseConfig = {
@@ -390,6 +379,124 @@
         let replyingToSender = null;
         let replyingToText = null;
 
+        // BİLDİRİM VE SES MOTORU DEĞİŞKENLERİ
+        let audioCtx = null;
+        let titleFlashInterval = null;
+        const originalTitle = "BlueChat - Güvenli ve Akıcı Mesajlaşma";
+        let lastProcessedTimes = {}; // Chat bazlı son gelen mesaj zaman takip haritası (Mükerrer bildirim engeli için)
+
+        // Tarayıcı Ses Kartını Sentezleme Motoru (Sıfır Dosya Maliyetli Bip Sesi)
+        function initAudioContext() {
+            if (!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            }
+            if (audioCtx && audioCtx.state === 'suspended') {
+                audioCtx.resume();
+            }
+        }
+
+        // Autoplay bloklarını aşmak için ilk tıklamada ses kartını uyandırıyoruz
+        document.addEventListener("click", initAudioContext, { once: true });
+        document.addEventListener("keydown", initAudioContext, { once: true });
+
+        // Kodla Sentezlenen Çok Sesli Çift Bip (Chirp) Bildirimi
+        function playNotificationSound() {
+            try {
+                initAudioContext();
+                if (!audioCtx) return;
+
+                const now = audioCtx.currentTime;
+
+                // Ton 1 (D5)
+                const osc1 = audioCtx.createOscillator();
+                const gain1 = audioCtx.createGain();
+                osc1.type = "sine";
+                osc1.frequency.setValueAtTime(587.33, now); 
+                gain1.gain.setValueAtTime(0.08, now);
+                gain1.gain.exponentialRampToValueAtTime(0.001, now + 0.12);
+                osc1.connect(gain1);
+                gain1.connect(audioCtx.destination);
+                osc1.start(now);
+                osc1.stop(now + 0.12);
+
+                // Ton 2 (F5 - Gecikmeli)
+                const delay = 0.08;
+                const osc2 = audioCtx.createOscillator();
+                const gain2 = audioCtx.createGain();
+                osc2.type = "sine";
+                osc2.frequency.setValueAtTime(698.46, now + delay); 
+                gain2.gain.setValueAtTime(0.08, now + delay);
+                gain2.gain.exponentialRampToValueAtTime(0.001, now + delay + 0.12);
+                osc2.connect(gain2);
+                gain2.connect(audioCtx.destination);
+                osc2.start(now + delay);
+                osc2.stop(now + delay + 0.12);
+            } catch (e) {
+                console.error("Ses sentezleme hatası: ", e);
+            }
+        }
+
+        // Tarayıcı Başlığı Yanıp Sönmesi (Tab Flashing)
+        function startTitleFlash(sender) {
+            if (titleFlashInterval) clearInterval(titleFlashInterval);
+            let showAlt = false;
+            titleFlashInterval = setInterval(() => {
+                document.title = showAlt ? `@${sender.toUpperCase()} mesaj gönderdi!` : "✉️ Yeni Mesajınız Var!";
+                showAlt = !showAlt;
+            }, 1200);
+        }
+
+        function stopTitleFlash() {
+            if (titleFlashInterval) {
+                clearInterval(titleFlashInterval);
+                titleFlashInterval = null;
+            }
+            document.title = originalTitle;
+        }
+
+        // Tarayıcı Push Bildirimi Motoru
+        async function requestNotificationPermission() {
+            if (!("Notification" in window)) return;
+            if (Notification.permission === "default") {
+                try {
+                    await Notification.requestPermission();
+                } catch (e) {
+                    console.error("Bildirim izni alınamadı: ", e);
+                }
+            }
+        }
+
+        function showPushNotification(sender, text, chatId, partner) {
+            if (!("Notification" in window)) return;
+            if (Notification.permission === "granted") {
+                const notification = new Notification(`@${sender.toUpperCase()} - BlueChat`, {
+                    body: text,
+                    tag: chatId || "generic_chat", // Aynı sohbete ait eski bildirimleri gruplar
+                    icon: "https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/svgs/solid/comments.svg"
+                });
+
+                notification.onclick = function() {
+                    window.focus();
+                    if (chatId && partner) {
+                        selectChatRoom(chatId, partner);
+                    }
+                    notification.close();
+                };
+            }
+        }
+
+        // Sayfa Odaklandığında Başlık ve Okunmamışları Sıfırlama
+        document.addEventListener("visibilitychange", () => {
+            if (document.visibilityState === "visible") {
+                stopTitleFlash();
+                if (activeChatId && currentUser) {
+                    db.collection("chats").doc(activeChatId).update({
+                        [`unreadCounts.${currentUser}`]: 0
+                    });
+                }
+            }
+        });
+
         // Sayfa Yüklendiğinde Beni Hatırla Kontrolü ve Güvenli Tetikleyici
         window.addEventListener("DOMContentLoaded", () => {
             const rememberedUser = localStorage.getItem("remembered_user");
@@ -401,6 +508,7 @@
                 const msg = document.getElementById("autoLoginMsg");
                 container.classList.remove("hidden");
                 
+                // Tarayıcı blokesini aşmak için kullanıcı etkileşimi (User Gesture) butonu sunuyoruz
                 msg.innerHTML = `
                     <span class="block mb-2">@${rememberedUser.toUpperCase()} hesabı algılandı.</span>
                     <button onclick="autoBiometricLogin('${rememberedUser}')" class="bg-blue-600 hover:bg-blue-500 text-white text-xs px-4 py-2 rounded-xl font-bold transition-all shadow-md">
@@ -620,6 +728,9 @@
             document.getElementById("myAvatar").innerText = username.substring(0, 2).toUpperCase();
             
             await db.collection("users").doc(currentUser).update({ status: "online" });
+
+            // Giriş esnasında tarayıcıdan anlık bildirim iznini talep etme
+            requestNotificationPermission();
 
             const userTheme = userData.theme || "sapphire";
             const userBg = userData.chatBackground || null;
@@ -1178,11 +1289,20 @@
             typingTimeout = setTimeout(() => { setTypingStatus(false); }, 2000);
         });
 
+        // Sohbet Listesi ve Gerçek Zamanlı Akıllı Bildirim Motoru
         function loadActiveChatsList() {
             db.collection("chats").orderBy("lastMessageTime", "desc").onSnapshot((snapshot) => {
                 const listContainer = document.getElementById("chatList");
                 listContainer.innerHTML = "";
                 let hasChat = false;
+
+                // Mükerrer bildirim sesini/ekran bildirimini önlemek için başlangıç durumunu eşitliyoruz
+                if (Object.keys(lastProcessedTimes).length === 0) {
+                    snapshot.forEach(doc => {
+                        const chat = doc.data();
+                        lastProcessedTimes[chat.chatId] = chat.lastMessageTime || 0;
+                    });
+                }
 
                 snapshot.forEach((doc) => {
                     const chat = doc.data();
@@ -1196,6 +1316,30 @@
                         const lastSender = chat.lastMessageSender;
                         const lastStatus = chat.lastMessageStatus;
                         const unreadCount = (chat.unreadCounts && chat.unreadCounts[currentUser]) || 0;
+
+                        // --- BİLDİRİM TETİKLEME ALGORİTMASI ---
+                        const msgTime = chat.lastMessageTime;
+                        if (lastSender && lastSender !== currentUser && msgTime > (lastProcessedTimes[chat.chatId] || 0)) {
+                            const isVeryRecent = (Date.now() - msgTime) < 5000; // Son 5 saniye içinde mi geldi?
+                            
+                            // Zaman kaydını güncelle
+                            lastProcessedTimes[chat.chatId] = msgTime;
+
+                            if (isVeryRecent) {
+                                // Eğer bu pencere aktif olarak açık değilse veya sekme tamamen arka plandaysa bildir!
+                                if (chat.chatId !== activeChatId || document.hidden) {
+                                    playNotificationSound(); // Yumuşak çift bip
+                                    
+                                    if (document.hidden) {
+                                        startTitleFlash(lastSender); // Başlığı yak söndür
+                                        showPushNotification(lastSender, lastMsgText, chat.chatId, partner); // Ekran bildirimi fırlat
+                                    }
+                                }
+                            }
+                        } else {
+                            // Zaman damgası takibini güncel tut (Eski mesajların girişte ötmesini engeller)
+                            lastProcessedTimes[chat.chatId] = msgTime || 0;
+                        }
 
                         let ticks = "";
                         if (lastSender === currentUser) {
