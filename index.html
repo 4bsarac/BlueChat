@@ -145,6 +145,40 @@
             justify-content: center;
         }
 
+        .sticker-panel {
+            position: absolute;
+            left: 16px;
+            right: 16px;
+            bottom: 76px;
+            z-index: 46;
+            max-height: 220px;
+            overflow-y: auto;
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            background: rgba(15, 23, 42, 0.98);
+            box-shadow: 0 20px 55px rgba(0, 0, 0, 0.35);
+            padding: 12px;
+        }
+
+        .sticker-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(42px, 1fr));
+            gap: 8px;
+        }
+
+        .sticker-grid button {
+            height: 42px;
+            border-radius: 12px;
+            background: rgba(30, 41, 59, 0.82);
+            font-size: 20px;
+            transition: transform 0.14s ease, background-color 0.14s ease;
+        }
+
+        .sticker-grid button:hover {
+            transform: translateY(-1px);
+            background: rgba(59, 130, 246, 0.18);
+        }
+
         .typing-pill {
             display: inline-flex;
             align-items: center;
@@ -205,7 +239,7 @@
                 
                 <div class="relative">
                     <input type="password" id="pinInput" placeholder="Şifre" maxlength="32" autocomplete="current-password" class="w-full bg-[#1e293b] border border-slate-800 rounded-2xl px-5 py-3.5 text-center text-white tracking-widest focus:outline-none focus:border-blue-500 text-sm transition-all duration-300">
-                    <button onclick="togglePinVisibility()" type="button" class="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors duration-200">
+                    <button data-action="toggle-pin-visibility" type="button" class="absolute right-4 top-4 text-slate-400 hover:text-white transition-colors duration-200">
                         <i id="eyeIcon" class="fa-solid fa-eye text-sm"></i>
                     </button>
                     <p id="pinError" class="text-red-400 text-[11px] mt-1.5 ml-2 hidden"></p>
@@ -218,7 +252,7 @@
 
                 <p id="generalLoginError" class="text-red-400 text-xs text-center font-medium hidden"></p>
                 
-                <button onclick="handleLogin()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 shadow-lg shadow-blue-600/15">
+                <button data-action="handle-login" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white py-3.5 rounded-2xl text-sm font-semibold transition-all duration-300 shadow-lg shadow-blue-600/15">
                     Giriş Yap
                 </button>
             </div>
@@ -235,7 +269,7 @@
             <p class="text-slate-400 text-xs mb-6 leading-relaxed">
                 Hesabınız onaylandı! Güvenliğiniz için **ilk girişte parmak izinizi kaydetmeniz zorunludur.** Şifreniz çalınsa dahi parmağınız olmadan kimse bu hesaba giremez.
             </p>
-            <button onclick="registerMandatoryBiometric()" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
+            <button data-action="register-mandatory-biometric" class="w-full bg-blue-600 hover:bg-blue-500 active:scale-[0.98] text-white font-bold py-4 rounded-2xl text-sm transition-all flex items-center justify-center gap-2 shadow-lg shadow-blue-600/20">
                 <i class="fa-solid fa-key"></i> Parmak İzimi Şimdi Tanımla
             </button>
         </div>
@@ -251,10 +285,10 @@
             <p class="text-slate-400 text-xs mb-4">Girdiğiniz kullanıcı adına ait aktif bir hesap bulunamadı. Bu kullanıcı adıyla bir <span class="text-amber-400 font-semibold">üyelik talebi</span> oluşturmak ister misiniz?</p>
             
             <div class="space-y-3">
-                <button onclick="createMembershipRequest()" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-2xl text-xs transition-colors shadow-lg shadow-amber-500/10">
+                <button data-action="create-membership-request" class="w-full bg-amber-500 hover:bg-amber-400 text-slate-950 font-bold py-3 rounded-2xl text-xs transition-colors shadow-lg shadow-amber-500/10">
                     Evet, Üyelik Talebi Gönder
                 </button>
-                <button onclick="closeRequestModal()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-2xl text-xs transition-colors">
+                <button data-action="close-request-modal" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-300 py-2.5 rounded-2xl text-xs transition-colors">
                     Vazgeç
                 </button>
             </div>
@@ -280,10 +314,10 @@
                     </div>
                 </div>
                 <div class="flex gap-4 text-slate-400">
-                    <button onclick="openSettingsModal()" title="Ayarlar" class="hover:text-blue-500 transition-colors">
+                    <button data-action="open-settings-modal" title="Ayarlar" class="hover:text-blue-500 transition-colors">
                         <i class="fa-solid fa-gear text-base"></i>
                     </button>
-                    <button onclick="logout()" title="Çıkış Yap" class="hover:text-red-500 transition-colors">
+                    <button data-action="logout" title="Çıkış Yap" class="hover:text-red-500 transition-colors">
                         <i class="fa-solid fa-power-off text-base"></i>
                     </button>
                 </div>
@@ -297,7 +331,7 @@
                 </div>
                 <div class="flex gap-2">
                     <input type="text" id="searchUserField" placeholder="Yeni kullanıcı adı..." autocomplete="off" autocapitalize="none" spellcheck="false" class="flex-1 bg-[#131b2e] text-slate-200 px-4 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
-                    <button onclick="startNewChat()" class="theme-btn text-white px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md flex items-center gap-1.5">
+                    <button data-action="start-new-chat" class="theme-btn text-white px-3 py-2.5 rounded-xl text-xs font-semibold transition-all shadow-md flex items-center gap-1.5">
                         <i class="fa-solid fa-plus text-[10px]"></i> Aç
                     </button>
                 </div>
@@ -313,13 +347,13 @@
             <!-- Sohbet Header -->
             <div class="px-4 py-3 theme-sidebar flex justify-between items-center border-b border-slate-900/60 shrink-0 min-h-16">
                 <div class="flex items-center gap-3">
-                    <button onclick="goBackToList()" title="Sohbet listesine dön" class="md:hidden w-10 h-10 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl flex items-center justify-center transition-colors">
+                    <button data-action="go-back-to-list" title="Sohbet listesine dön" class="md:hidden w-10 h-10 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl flex items-center justify-center transition-colors">
                         <i class="fa-solid fa-arrow-left text-sm"></i>
                     </button>
                     <div id="activeAvatar" class="w-10 h-10 theme-btn rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md">
                         -
                     </div>
-                    <div class="cursor-pointer" onclick="toggleChatActionsMenu()">
+                    <div class="cursor-pointer" data-action="toggle-chat-actions-menu">
                         <h3 id="activeChatName" class="font-bold text-white text-sm tracking-tight flex items-center gap-1.5">
                             <span>-</span>
                         </h3>
@@ -327,7 +361,7 @@
                     </div>
                 </div>
                 <div class="flex gap-4 text-slate-400">
-                    <button onclick="openWallpaperModal()" title="Arka Plan Değiştir" class="hover:text-blue-500 transition-colors">
+                    <button data-action="open-wallpaper-modal" title="Arka Plan Değiştir" class="hover:text-blue-500 transition-colors">
                         <i class="fa-solid fa-circle-half-stroke text-sm"></i>
                     </button>
                 </div>
@@ -335,7 +369,7 @@
 
             <!-- Üst İsim Tıklama Menüsü -->
             <div id="chatActionsMenu" class="hidden absolute top-16 left-4 bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow-2xl z-40 w-48 animate-fade-in">
-                <button onclick="deleteChatForMe()" class="w-full text-left text-red-400 hover:bg-red-500/10 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors">
+                <button data-action="delete-chat-for-me" class="w-full text-left text-red-400 hover:bg-red-500/10 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-trash-can"></i> Sohbeti Temizle (Sil)
                 </button>
             </div>
@@ -344,13 +378,13 @@
             <div id="chatBackground" class="flex-1 overflow-y-auto p-4 flex flex-col justify-end bg-cover bg-center transition-all relative">
                 <div id="messageContainer" class="space-y-3 overflow-y-auto pr-1">
                 </div>
-                <button id="scrollBottomBtn" onclick="scrollActiveChatToBottom()" class="scroll-bottom-btn hidden" title="En alta in">
+                <button id="scrollBottomBtn" data-action="scroll-bottom" class="scroll-bottom-btn hidden" title="En alta in">
                     <i class="fa-solid fa-arrow-down"></i>
                 </button>
                 <div id="messageActionMenu" class="message-action-menu hidden">
-                    <button onclick="replySelectedMessage()" title="Yanıtla"><i class="fa-solid fa-reply"></i> Yanıtla</button>
-                    <button onclick="copySelectedMessage()" title="Kopyala"><i class="fa-regular fa-copy"></i> Kopyala</button>
-                    <button onclick="deleteSelectedMessageForMe()" class="text-red-300 hover:text-red-100" title="Sil"><i class="fa-regular fa-trash-can"></i> Sil</button>
+                    <button data-action="reply-selected-message" title="Yanıtla"><i class="fa-solid fa-reply"></i> Yanıtla</button>
+                    <button data-action="copy-selected-message" title="Kopyala"><i class="fa-regular fa-copy"></i> Kopyala</button>
+                    <button data-action="delete-selected-message" class="text-red-300 hover:text-red-100" title="Sil"><i class="fa-regular fa-trash-can"></i> Sil</button>
                 </div>
             </div>
 
@@ -360,13 +394,20 @@
                     <span id="replyPreviewUser" class="text-[10px] text-blue-400 font-bold block">@AHMET</span>
                     <span id="replyPreviewText" class="text-xs text-slate-400 truncate max-w-xs block">Alıntılanan mesaj</span>
                 </div>
-                <button onclick="cancelReply()" class="text-slate-400 hover:text-white p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
+                <button data-action="cancel-reply" class="text-slate-400 hover:text-white p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
             <!-- Sabit Mesaj Giriş Alanı -->
+            <div id="stickerPanel" class="sticker-panel hidden">
+                <div id="stickerGrid" class="sticker-grid"></div>
+                <p id="stickerPanelNote" class="hidden text-[11px] text-slate-400 leading-relaxed"></p>
+            </div>
             <div class="px-4 py-3 theme-sidebar border-t border-slate-900/60 flex items-end gap-3 shrink-0">
+                <button id="stickerToggleBtn" data-action="toggle-sticker-panel" type="button" class="w-11 h-11 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center transition-colors shrink-0" title="Emoji ve sticker">
+                    <i class="fa-regular fa-face-smile text-lg"></i>
+                </button>
                 <textarea id="messageInput" rows="1" placeholder="Bir mesaj yazın..." class="flex-1 max-h-32 resize-none bg-[#131b2e] text-slate-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm transition-all leading-relaxed"></textarea>
-                <button onclick="sendMessage()" class="w-11 h-11 theme-btn active:scale-95 text-white rounded-xl flex items-center justify-center transition-all shadow-md shrink-0">
+                <button data-action="send-message" class="w-11 h-11 theme-btn active:scale-95 text-white rounded-xl flex items-center justify-center transition-all shadow-md shrink-0">
                     <i class="fa-solid fa-paper-plane text-sm pl-0.5"></i>
                 </button>
             </div>
@@ -389,14 +430,14 @@
         <div class="bg-[#0f172a] border border-slate-800 p-6 rounded-[2.5rem] w-full max-w-lg shadow-2xl flex flex-col gap-6 animate-fade-in">
             <div class="flex justify-between items-center border-b border-slate-800 pb-3">
                 <h3 class="text-base font-bold text-white"><i class="fa-solid fa-user-gear text-blue-500 mr-2"></i> Hesap Ayarları & Tema</h3>
-                <button onclick="closeSettingsModal()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button data-action="close-settings-modal" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
 
             <div class="flex gap-2 overflow-x-auto pb-1">
-                <button onclick="switchSettingsTab('profile')" data-settings-tab="profile" class="settings-tab bg-blue-600 text-white px-3 py-2 rounded-xl text-xs font-bold shrink-0">Profil</button>
-                <button onclick="switchSettingsTab('security')" data-settings-tab="security" class="settings-tab bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">Güvenlik</button>
-                <button onclick="switchSettingsTab('theme')" data-settings-tab="theme" class="settings-tab bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">Tema</button>
-                <button onclick="switchSettingsTab('notifications')" data-settings-tab="notifications" class="settings-tab bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">Bildirimler</button>
+                <button data-action="switch-settings-tab" data-settings-tab="profile" class="settings-tab bg-blue-600 text-white px-3 py-2 rounded-xl text-xs font-bold shrink-0">Profil</button>
+                <button data-action="switch-settings-tab" data-settings-tab="security" class="settings-tab bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">Güvenlik</button>
+                <button data-action="switch-settings-tab" data-settings-tab="theme" class="settings-tab bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">Tema</button>
+                <button data-action="switch-settings-tab" data-settings-tab="notifications" class="settings-tab bg-slate-800 text-slate-300 px-3 py-2 rounded-xl text-xs font-bold shrink-0">Bildirimler</button>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -408,11 +449,11 @@
                         </div>
                         <div class="min-w-0 flex-1">
                             <h4 class="text-xs font-bold text-slate-200 uppercase tracking-wider">Profil Fotoğrafı</h4>
-                            <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">Galeriden bir görsel seçin. Kaydedince Supabase Storage alanına yüklenecek.</p>
-                            <button type="button" onclick="document.getElementById('settingsAvatarFileInput').click()" class="mt-3 bg-slate-800 hover:bg-slate-700 text-slate-100 px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-2 transition-colors">
+                            <p class="text-[10px] text-slate-500 mt-1 leading-relaxed">Galeriden bir görsel seçin. Profiliniz bütün kullanıcılar tarafından görünür; yakında görünürlük seçenekleri eklenecek.</p>
+                            <button type="button" data-action="choose-avatar-file" class="mt-3 bg-slate-800 hover:bg-slate-700 text-slate-100 px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-2 transition-colors">
                                 <i class="fa-solid fa-image"></i> Fotoğraf Seç
                             </button>
-                            <button type="button" onclick="clearSelectedAvatar()" class="mt-3 ml-2 bg-slate-900 hover:bg-slate-800 text-slate-400 px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-2 transition-colors">
+                            <button type="button" data-action="clear-selected-avatar" class="mt-3 ml-2 bg-slate-900 hover:bg-slate-800 text-slate-400 px-3 py-2 rounded-xl text-xs font-bold inline-flex items-center gap-2 transition-colors">
                                 <i class="fa-solid fa-xmark"></i> Kaldır
                             </button>
                         </div>
@@ -449,7 +490,7 @@
                             <span class="text-sm text-slate-200 font-bold">4-32 karakter</span>
                         </div>
                     </div>
-                    <button onclick="registerBiometric()" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                    <button data-action="register-biometric" class="w-full bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors">
                         <i class="fa-solid fa-fingerprint text-blue-400"></i> Yeni Parmak İzi Tanımla
                     </button>
                 </div>
@@ -459,12 +500,12 @@
                     <div>
                         <h4 class="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">Tema Şablonu Seçin</h4>
                         <div class="grid grid-cols-2 gap-2">
-                            <button onclick="previewTheme('sapphire')" class="p-2.5 bg-[#0b1120] border border-blue-500/20 rounded-xl text-xs font-semibold text-blue-400 text-center hover:border-blue-500 transition-colors">Safir Gecesi</button>
-                            <button onclick="previewTheme('emerald')" class="p-2.5 bg-[#041c15] border border-emerald-500/20 rounded-xl text-xs font-semibold text-emerald-400 text-center hover:border-emerald-500 transition-colors">Zümrüt Ormanı</button>
-                            <button onclick="previewTheme('monochrome')" class="p-2.5 bg-[#0e0f11] border border-slate-700 rounded-xl text-xs font-semibold text-slate-300 text-center hover:border-slate-500 transition-colors">Kömür Grisi</button>
-                            <button onclick="previewTheme('purple')" class="p-2.5 bg-[#120924] border border-purple-500/20 rounded-xl text-xs font-semibold text-purple-400 text-center hover:border-purple-500 transition-colors">Asil Mor</button>
-                            <button onclick="previewTheme('sakura')" class="p-2.5 bg-[#1a080f] border border-rose-500/20 rounded-xl text-xs font-semibold text-rose-400 text-center hover:border-rose-500 transition-colors">Kiraz Pembesi</button>
-                            <button onclick="previewTheme('amber')" class="p-2.5 bg-[#170e03] border border-amber-500/20 rounded-xl text-xs font-semibold text-amber-400 text-center hover:border-amber-500 transition-colors">Kehribar Sarısı</button>
+                            <button data-action="preview-theme" data-theme="sapphire" class="p-2.5 bg-[#0b1120] border border-blue-500/20 rounded-xl text-xs font-semibold text-blue-400 text-center hover:border-blue-500 transition-colors">Safir Gecesi</button>
+                            <button data-action="preview-theme" data-theme="emerald" class="p-2.5 bg-[#041c15] border border-emerald-500/20 rounded-xl text-xs font-semibold text-emerald-400 text-center hover:border-emerald-500 transition-colors">Zümrüt Ormanı</button>
+                            <button data-action="preview-theme" data-theme="monochrome" class="p-2.5 bg-[#0e0f11] border border-slate-700 rounded-xl text-xs font-semibold text-slate-300 text-center hover:border-slate-500 transition-colors">Kömür Grisi</button>
+                            <button data-action="preview-theme" data-theme="purple" class="p-2.5 bg-[#120924] border border-purple-500/20 rounded-xl text-xs font-semibold text-purple-400 text-center hover:border-purple-500 transition-colors">Asil Mor</button>
+                            <button data-action="preview-theme" data-theme="sakura" class="p-2.5 bg-[#1a080f] border border-rose-500/20 rounded-xl text-xs font-semibold text-rose-400 text-center hover:border-rose-500 transition-colors">Kiraz Pembesi</button>
+                            <button data-action="preview-theme" data-theme="amber" class="p-2.5 bg-[#170e03] border border-amber-500/20 rounded-xl text-xs font-semibold text-amber-400 text-center hover:border-amber-500 transition-colors">Kehribar Sarısı</button>
                         </div>
                     </div>
 
@@ -493,8 +534,8 @@
             </div>
 
             <div class="border-t border-slate-800 pt-4 flex gap-2">
-                <button onclick="saveAdvancedSettings()" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-2xl text-xs transition-colors shadow-lg">Değişiklikleri Kaydet</button>
-                <button onclick="closeSettingsModal()" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-6 rounded-2xl text-xs transition-colors">Vazgeç</button>
+                <button data-action="save-advanced-settings" class="flex-1 bg-blue-600 hover:bg-blue-500 text-white font-bold py-3 rounded-2xl text-xs transition-colors shadow-lg">Değişiklikleri Kaydet</button>
+                <button data-action="close-settings-modal" class="bg-slate-800 hover:bg-slate-700 text-slate-300 px-6 rounded-2xl text-xs transition-colors">Vazgeç</button>
             </div>
         </div>
     </div>
@@ -504,22 +545,22 @@
         <div class="bg-[#0f172a] border border-slate-800 p-6 rounded-[2rem] w-full max-w-md shadow-2xl">
             <div class="flex justify-between items-center mb-4 border-b border-slate-800 pb-3">
                 <h3 class="text-base font-bold text-white"><i class="fa-solid fa-palette text-blue-500 mr-2"></i> Sohbet Duvar Kağıdı</h3>
-                <button onclick="closeWallpaperModal()" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+                <button data-action="close-wallpaper-modal" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
             </div>
             <label class="block text-xs font-semibold text-slate-400 mb-2">Düz Renkler</label>
             <div class="grid grid-cols-5 gap-2 mb-4">
-                <div onclick="changeBgColor('#070b19')" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #070b19;"></div>
-                <div onclick="changeBgColor('#111827')" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #111827;"></div>
-                <div onclick="changeBgColor('#0f172a')" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #0f172a;"></div>
-                <div onclick="changeBgColor('#1e1b4b')" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #1e1b4b;"></div>
-                <div onclick="changeBgColor('#030712')" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #030712;"></div>
+                <div data-action="change-bg-color" data-color="#070b19" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #070b19;"></div>
+                <div data-action="change-bg-color" data-color="#111827" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #111827;"></div>
+                <div data-action="change-bg-color" data-color="#0f172a" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #0f172a;"></div>
+                <div data-action="change-bg-color" data-color="#1e1b4b" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #1e1b4b;"></div>
+                <div data-action="change-bg-color" data-color="#030712" class="h-10 rounded-xl cursor-pointer border border-white/5 hover:border-blue-500" style="background-color: #030712;"></div>
             </div>
             <label class="block text-xs font-semibold text-slate-400 mb-2">Manzaralar</label>
             <div class="grid grid-cols-4 gap-2">
-                <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=150&auto=format&fit=crop" onclick="changeBgImage(this.src)" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
-                <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=150&auto=format&fit=crop" onclick="changeBgImage(this.src)" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
-                <img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=150&auto=format&fit=crop" onclick="changeBgImage(this.src)" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
-                <img src="https://images.unsplash.com/photo-1557683316-973673baf926?w=150&auto=format&fit=crop" onclick="changeBgImage(this.src)" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
+                <img src="https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=150&auto=format&fit=crop" data-action="change-bg-image" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
+                <img src="https://images.unsplash.com/photo-1518531933037-91b2f5f229cc?w=150&auto=format&fit=crop" data-action="change-bg-image" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
+                <img src="https://images.unsplash.com/photo-1579546929518-9e396f3cc809?w=150&auto=format&fit=crop" data-action="change-bg-image" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
+                <img src="https://images.unsplash.com/photo-1557683316-973673baf926?w=150&auto=format&fit=crop" data-action="change-bg-image" class="h-12 w-full object-cover rounded-xl cursor-pointer border border-transparent hover:border-blue-500">
             </div>
         </div>
     </div>
@@ -673,6 +714,12 @@
             errEl.classList.toggle("hidden", !message);
         }
 
+        function getFriendlyAvatarUploadMessage(err) {
+            const message = String(err?.message || "");
+            if (message.includes("PNG") || message.includes("3 MB")) return message;
+            return "Fotoğraf yükleme izni şu an kapalı görünüyor. Yönetici ayarını kontrol edin.";
+        }
+
         function handleAvatarFileSelection(event) {
             const file = event.target.files && event.target.files[0];
             const fileNameEl = document.getElementById("avatarFileName");
@@ -726,7 +773,7 @@
                 return shouldRemoveAvatar ? "" : (userProfileCache[currentUser]?.avatarUrl || "");
             }
 
-            if (!supabaseClient) throw new Error("Supabase yükleme kütüphanesi yüklenemedi.");
+            if (!supabaseClient) throw new Error("Fotoğraf yükleme hazır değil.");
             if (!ALLOWED_AVATAR_TYPES.has(file.type)) throw new Error("Lütfen PNG, JPG veya WEBP görsel seçin.");
             if (file.size > MAX_AVATAR_SIZE_BYTES) throw new Error("Profil fotoğrafı en fazla 3 MB olabilir.");
 
@@ -742,6 +789,115 @@
 
             if (error) throw error;
             return publicAvatarUrl(storagePath);
+        }
+
+        function normalizeStickerList(value) {
+            const source = Array.isArray(value) ? value : DEFAULT_ALLOWED_STICKERS;
+            return source
+                .map((item) => String(item || "").trim())
+                .filter((item) => item && Array.from(item).length <= 8)
+                .slice(0, 48);
+        }
+
+        async function loadAppFeatureConfig() {
+            try {
+                const featureDoc = await db.collection("appConfig").doc("features").get();
+                if (featureDoc.exists) {
+                    const data = featureDoc.data() || {};
+                    stickersEnabled = data.stickersEnabled !== false;
+                    const configuredStickers = normalizeStickerList(data.allowedStickers || data.stickers);
+                    if (configuredStickers.length) allowedStickers = configuredStickers;
+
+                    const configuredLimit = Number(data.maxStickersPerMessage);
+                    if (Number.isFinite(configuredLimit)) {
+                        maxStickersPerMessage = Math.min(Math.max(Math.floor(configuredLimit), 1), 20);
+                    }
+                }
+            } catch (err) {
+                console.warn("Feature config could not be loaded:", err);
+            }
+
+            renderStickerPanel();
+        }
+
+        function renderStickerPanel(noteMessage = "") {
+            const panel = document.getElementById("stickerPanel");
+            const grid = document.getElementById("stickerGrid");
+            const note = document.getElementById("stickerPanelNote");
+            if (!panel || !grid || !note) return;
+
+            grid.innerHTML = "";
+            note.innerText = noteMessage;
+            note.classList.toggle("hidden", !noteMessage);
+
+            if (!stickersEnabled) {
+                grid.classList.add("hidden");
+                note.innerText = "Sticker kullanımı şu anda yönetici tarafından kapalı.";
+                note.classList.remove("hidden");
+                return;
+            }
+
+            grid.classList.remove("hidden");
+            const stickers = normalizeStickerList(allowedStickers);
+            if (!stickers.length) {
+                note.innerText = "Sticker listesi şu anda boş.";
+                note.classList.remove("hidden");
+                return;
+            }
+
+            stickers.forEach((sticker) => {
+                const button = document.createElement("button");
+                button.type = "button";
+                button.dataset.action = "insert-sticker";
+                button.dataset.sticker = sticker;
+                button.setAttribute("aria-label", `${sticker} ekle`);
+                button.textContent = sticker;
+                grid.appendChild(button);
+            });
+        }
+
+        function countConfiguredStickers(value) {
+            return allowedStickers.reduce((total, sticker) => {
+                if (!sticker) return total;
+                return total + String(value || "").split(sticker).length - 1;
+            }, 0);
+        }
+
+        function closeStickerPanel() {
+            document.getElementById("stickerPanel")?.classList.add("hidden");
+        }
+
+        function toggleStickerPanel() {
+            const panel = document.getElementById("stickerPanel");
+            if (!panel) return;
+            renderStickerPanel();
+            panel.classList.toggle("hidden");
+        }
+
+        function insertSticker(sticker) {
+            if (!stickersEnabled || !allowedStickers.includes(sticker)) return;
+            const input = document.getElementById("messageInput");
+            if (!input) return;
+
+            if (countConfiguredStickers(input.value) >= maxStickersPerMessage) {
+                renderStickerPanel(`Bir mesajda en fazla ${maxStickersPerMessage} sticker kullanabilirsiniz.`);
+                return;
+            }
+
+            const currentValue = input.value || "";
+            const start = input.selectionStart ?? currentValue.length;
+            const end = input.selectionEnd ?? currentValue.length;
+            const before = currentValue.slice(0, start);
+            const after = currentValue.slice(end);
+            const prefix = before && !/\s$/.test(before) ? " " : "";
+            const suffix = after && !/^\s/.test(after) ? " " : "";
+            const token = `${prefix}${sticker}${suffix}`;
+
+            input.value = `${before}${token}${after}`;
+            const nextCursor = before.length + token.length;
+            input.focus();
+            input.setSelectionRange(nextCursor, nextCursor);
+            input.dispatchEvent(new Event("input", { bubbles: true }));
         }
 
         async function getUserProfile(username) {
@@ -899,6 +1055,11 @@
         let isOtherUserTyping = false;
         let currentMobileView = 'list'; 
         let selectedPreviewTheme = "sapphire";
+        const DEFAULT_ALLOWED_STICKERS = Object.freeze(["😀", "😂", "😊", "😎", "👍", "🙏", "❤️", "🔥", "👏", "🤲", "🌹", "✨"]);
+        let stickersEnabled = true;
+        let allowedStickers = [...DEFAULT_ALLOWED_STICKERS];
+        let maxStickersPerMessage = 6;
+        let swipeBackState = null;
 
         let replyingToMsgId = null;
         let replyingToSender = null;
@@ -1356,6 +1517,7 @@
             const appliedUserBg = userBg ? applyChatBackground(userBg) : false;
 
             initAppSettings(appliedUserBg ? userBg : null);
+            loadAppFeatureConfig();
             loadActiveChatsList();
             updateMobileLayout();
         }
@@ -1513,7 +1675,8 @@
             try {
                 avatarUrlInput = await uploadSelectedAvatar(newUsernameInput);
             } catch (err) {
-                setAvatarError("Fotoğraf yüklenemedi: " + err.message);
+                console.error("Avatar upload failed:", err);
+                setAvatarError(getFriendlyAvatarUploadMessage(err));
                 return;
             }
 
@@ -1667,6 +1830,45 @@
             currentMobileView = 'list';
             updateMobileLayout();
             setTypingStatus(false);
+            closeStickerPanel();
+        }
+
+        function shouldIgnoreSwipeTarget(target) {
+            return Boolean(target?.closest("button, input, textarea, a, .message-content, #messageActionMenu, #stickerPanel"));
+        }
+
+        function handleChatSwipeStart(event) {
+            if (window.innerWidth >= 768 || currentMobileView !== 'chat') return;
+            if (shouldIgnoreSwipeTarget(event.target)) return;
+            const touch = event.touches && event.touches[0];
+            if (!touch) return;
+            swipeBackState = {
+                x: touch.clientX,
+                y: touch.clientY,
+                time: Date.now()
+            };
+        }
+
+        function handleChatSwipeEnd(event) {
+            if (!swipeBackState || window.innerWidth >= 768 || currentMobileView !== 'chat') {
+                swipeBackState = null;
+                return;
+            }
+
+            const touch = event.changedTouches && event.changedTouches[0];
+            if (!touch) {
+                swipeBackState = null;
+                return;
+            }
+
+            const deltaX = touch.clientX - swipeBackState.x;
+            const deltaY = Math.abs(touch.clientY - swipeBackState.y);
+            const elapsed = Date.now() - swipeBackState.time;
+            swipeBackState = null;
+
+            if (deltaX > 90 && deltaY < 70 && elapsed < 700) {
+                goBackToList();
+            }
         }
 
         function updateMobileLayout() {
@@ -1752,6 +1954,7 @@
             currentChatUserKey = chatUserKey;
             shouldScrollOnNextMessages = true;
             closeMessageActionMenu();
+            closeStickerPanel();
 
             currentMobileView = 'chat'; 
             updateMobileLayout();
@@ -2070,6 +2273,7 @@
                 input.value = "";
                 resizeMessageInput();
                 cancelReply();
+                closeStickerPanel();
                 input.focus();
                 scrollActiveChatToBottom();
             } catch (err) {
@@ -2083,6 +2287,52 @@
                 await db.collection("chats").doc(activeChatId).update({ [`typing.${currentChatUserKey || currentUser}`]: status });
             } catch (err) {
                 console.error(err);
+            }
+        }
+
+        function handleAppActionClick(event) {
+            const actionEl = event.target.closest("[data-action]");
+            if (!actionEl) return;
+
+            const action = actionEl.dataset.action;
+            const actions = {
+                "handle-login": () => handleLogin(),
+                "register-mandatory-biometric": () => registerMandatoryBiometric(),
+                "create-membership-request": () => createMembershipRequest(),
+                "close-request-modal": () => closeRequestModal(),
+                "register-biometric": () => registerBiometric(),
+                "start-new-chat": () => startNewChat(),
+                "logout": () => logout(),
+                "go-back-to-list": () => goBackToList(),
+                "open-settings-modal": () => openSettingsModal(),
+                "close-settings-modal": () => closeSettingsModal(),
+                "save-advanced-settings": () => saveAdvancedSettings(),
+                "switch-settings-tab": () => switchSettingsTab(actionEl.dataset.settingsTab || "profile"),
+                "preview-theme": () => previewTheme(actionEl.dataset.theme || "sapphire"),
+                "toggle-pin-visibility": () => togglePinVisibility(),
+                "toggle-chat-actions-menu": () => toggleChatActionsMenu(),
+                "delete-chat-for-me": () => deleteChatForMe(),
+                "open-wallpaper-modal": () => openWallpaperModal(),
+                "close-wallpaper-modal": () => closeWallpaperModal(),
+                "change-bg-color": () => changeBgColor(actionEl.dataset.color || ""),
+                "change-bg-image": () => changeBgImage(actionEl.getAttribute("src") || ""),
+                "send-message": () => sendMessage(),
+                "scroll-bottom": () => scrollActiveChatToBottom(),
+                "reply-selected-message": () => replySelectedMessage(),
+                "copy-selected-message": () => copySelectedMessage(),
+                "delete-selected-message": () => deleteSelectedMessageForMe(),
+                "cancel-reply": () => cancelReply(),
+                "choose-avatar-file": () => document.getElementById("settingsAvatarFileInput")?.click(),
+                "clear-selected-avatar": () => clearSelectedAvatar(),
+                "toggle-sticker-panel": () => toggleStickerPanel(),
+                "insert-sticker": () => insertSticker(actionEl.dataset.sticker || "")
+            };
+
+            if (!actions[action]) return;
+            event.preventDefault();
+            const result = actions[action]();
+            if (result && typeof result.catch === "function") {
+                result.catch((err) => console.error("Action failed:", action, err));
             }
         }
 
@@ -2122,7 +2372,16 @@
         document.getElementById("settingsUsernameInput")?.addEventListener("input", updateSettingsAvatarPreview);
         document.getElementById("settingsAvatarFileInput")?.addEventListener("change", handleAvatarFileSelection);
 
+        document.addEventListener("click", handleAppActionClick);
+        document.addEventListener("click", (event) => {
+            if (!event.target.closest("#stickerPanel") && !event.target.closest("#stickerToggleBtn")) {
+                closeStickerPanel();
+            }
+        });
+
         document.getElementById("messageContainer").addEventListener("scroll", updateScrollBottomButton);
+        document.getElementById("activeChatContainer").addEventListener("touchstart", handleChatSwipeStart, { passive: true });
+        document.getElementById("activeChatContainer").addEventListener("touchend", handleChatSwipeEnd, { passive: true });
         document.getElementById("chatBackground").addEventListener("click", (event) => {
             if (!event.target.closest(".message-content") && !event.target.closest("#messageActionMenu")) {
                 closeMessageActionMenu();
@@ -2288,6 +2547,14 @@
             }
         }
 
+        function openWallpaperModal() {
+            document.getElementById("wallpaperModal").classList.remove("hidden");
+        }
+
+        function closeWallpaperModal() {
+            document.getElementById("wallpaperModal").classList.add("hidden");
+        }
+
         async function changeBgColor(hexColor) {
             if (!isSafeHexColor(hexColor)) return;
             applyChatBackground(hexColor);
@@ -2326,38 +2593,6 @@
             return date.getHours().toString().padStart(2, '0') + ":" + date.getMinutes().toString().padStart(2, '0');
         }
 
-        window.handleLogin = handleLogin;
-        window.autoBiometricLogin = autoBiometricLogin;
-        window.createMembershipRequest = createMembershipRequest;
-        window.registerMandatoryBiometric = registerMandatoryBiometric;
-        window.registerBiometric = registerBiometric;
-        window.startNewChat = startNewChat;
-        window.sendMessage = sendMessage;
-        window.logout = logout;
-        window.closeRequestModal = closeRequestModal;
-        window.goBackToList = goBackToList;
-        window.openSettingsModal = openSettingsModal;
-        window.closeSettingsModal = closeSettingsModal;
-        window.saveAdvancedSettings = saveAdvancedSettings;
-        window.switchSettingsTab = switchSettingsTab;
-        window.previewTheme = previewTheme;
-        window.togglePinVisibility = togglePinVisibility;
-        window.toggleChatActionsMenu = toggleChatActionsMenu;
-        window.deleteChatForMe = deleteChatForMe;
-        window.triggerReply = triggerReply;
-        window.cancelReply = cancelReply;
-        window.scrollToMessage = scrollToMessage;
-        window.scrollActiveChatToBottom = scrollActiveChatToBottom;
-        window.replySelectedMessage = replySelectedMessage;
-        window.copySelectedMessage = copySelectedMessage;
-        window.deleteSelectedMessageForMe = deleteSelectedMessageForMe;
-        window.clearSelectedAvatar = clearSelectedAvatar;
-
-        window.openWallpaperModal = () => document.getElementById("wallpaperModal").classList.remove("hidden");
-        window.closeWallpaperModal = () => document.getElementById("wallpaperModal").classList.add("hidden");
-        window.changeBgColor = changeBgColor;
-        window.changeBgImage = changeBgImage;
-        window.handleKeyPress = (e) => { if (e.key === "Enter") sendMessage(); };
     </script>
 </body>
 </html>
