@@ -16,7 +16,7 @@
 
     <style>
         html, body {
-            height: 100dvh;
+            height: var(--app-viewport-height, 100dvh);
             height: -webkit-fill-available;
             overflow: hidden;
             background-color: var(--theme-bg);
@@ -24,6 +24,7 @@
         }
 
         :root {
+            --app-viewport-height: 100dvh;
             --theme-bg: #0b0f14;
             --theme-sidebar: #111827;
             --theme-sender-bg: #2563eb;
@@ -36,6 +37,10 @@
         .theme-sidebar { background-color: var(--theme-sidebar); }
         .theme-btn { background-color: var(--theme-primary); }
         .theme-btn:hover { background-color: var(--theme-primary-hover); }
+
+        #activeChatContainer {
+            height: var(--app-viewport-height, 100dvh);
+        }
 
         ::-webkit-scrollbar { width: 4px; }
         ::-webkit-scrollbar-track { background: rgba(0,0,0,0.02); }
@@ -80,6 +85,15 @@
             max-width: min(100%, 560px);
             line-height: 1.5;
             overflow-wrap: anywhere;
+            user-select: none;
+            -webkit-user-select: none;
+            -webkit-tap-highlight-color: transparent;
+            touch-action: manipulation;
+        }
+
+        .message-hold-active {
+            transform: scale(0.985);
+            filter: brightness(1.08);
         }
 
         .date-divider {
@@ -96,37 +110,96 @@
         }
 
         .message-action-menu {
-            position: absolute;
-            right: 16px;
-            bottom: 76px;
-            z-index: 45;
+            position: fixed;
+            left: 50%;
+            top: 50%;
+            z-index: 60;
             display: flex;
+            flex-direction: column;
             gap: 6px;
-            padding: 6px;
-            border-radius: 14px;
-            border: 1px solid rgba(148, 163, 184, 0.16);
-            background: rgba(15, 23, 42, 0.96);
-            box-shadow: 0 18px 50px rgba(0, 0, 0, 0.32);
+            min-width: 178px;
+            padding: 8px;
+            border-radius: 18px;
+            border: 1px solid rgba(148, 163, 184, 0.18);
+            background: rgba(15, 23, 42, 0.94);
+            backdrop-filter: blur(18px);
+            box-shadow: 0 22px 60px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.06);
+            transform: translate(-50%, -50%) scale(0.98);
+            transform-origin: top center;
+            animation: menu-pop 0.16s ease forwards;
+        }
+
+        .message-action-menu.hidden,
+        .scroll-bottom-btn.hidden {
+            display: none;
         }
 
         .message-action-menu button,
         .icon-chip {
             display: inline-flex;
             align-items: center;
-            justify-content: center;
+            justify-content: flex-start;
             gap: 6px;
-            border-radius: 10px;
-            padding: 8px 10px;
-            color: #cbd5e1;
+            border-radius: 13px;
+            padding: 10px 12px;
+            color: #e2e8f0;
             font-size: 11px;
             font-weight: 700;
-            transition: background-color 0.16s ease, color 0.16s ease;
+            transition: background-color 0.16s ease, color 0.16s ease, transform 0.16s ease;
         }
 
         .message-action-menu button:hover,
         .icon-chip:hover {
             background: rgba(59, 130, 246, 0.14);
             color: #fff;
+            transform: translateX(2px);
+        }
+
+        .message-action-menu i {
+            width: 22px;
+            height: 22px;
+            border-radius: 9px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            background: rgba(255, 255, 255, 0.08);
+            color: #93c5fd;
+        }
+
+        .message-action-menu [data-action="react-selected-message"] {
+            justify-content: center;
+            padding: 8px;
+            font-size: 17px;
+        }
+
+        .message-reactions {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+            margin-top: 6px;
+        }
+
+        .reaction-chip {
+            display: inline-flex;
+            align-items: center;
+            gap: 3px;
+            min-height: 22px;
+            padding: 3px 7px;
+            border-radius: 999px;
+            background: rgba(15, 23, 42, 0.72);
+            border: 1px solid rgba(148, 163, 184, 0.16);
+            color: #e2e8f0;
+            font-size: 11px;
+            font-weight: 700;
+        }
+
+        .message-search-hit .message-content {
+            box-shadow: 0 0 0 2px rgba(245, 158, 11, 0.55), 0 14px 30px rgba(245, 158, 11, 0.12);
+        }
+
+        @keyframes menu-pop {
+            from { opacity: 0; transform: translate(-50%, -46%) scale(0.94); }
+            to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
         }
 
         .scroll-bottom-btn {
@@ -350,7 +423,7 @@
                     <button data-action="go-back-to-list" title="Sohbet listesine dön" class="md:hidden w-10 h-10 bg-slate-800 hover:bg-slate-700 text-slate-100 rounded-xl flex items-center justify-center transition-colors">
                         <i class="fa-solid fa-arrow-left text-sm"></i>
                     </button>
-                    <div id="activeAvatar" class="w-10 h-10 theme-btn rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md">
+                    <div id="activeAvatar" data-action="open-profile-detail" class="w-10 h-10 theme-btn rounded-xl flex items-center justify-center text-white font-bold text-sm shadow-md cursor-pointer">
                         -
                     </div>
                     <div class="cursor-pointer" data-action="toggle-chat-actions-menu">
@@ -361,14 +434,36 @@
                     </div>
                 </div>
                 <div class="flex gap-4 text-slate-400">
+                    <button data-action="toggle-message-search" title="Mesajlarda Ara" class="hover:text-blue-500 transition-colors">
+                        <i class="fa-solid fa-magnifying-glass text-sm"></i>
+                    </button>
                     <button data-action="open-wallpaper-modal" title="Arka Plan Değiştir" class="hover:text-blue-500 transition-colors">
                         <i class="fa-solid fa-circle-half-stroke text-sm"></i>
                     </button>
                 </div>
             </div>
 
+            <div id="messageSearchBar" class="hidden px-4 py-3 theme-sidebar border-b border-slate-900/60 shrink-0">
+                <div class="relative">
+                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-1/2 -translate-y-1/2 text-slate-500 text-xs"></i>
+                    <input id="messageSearchInput" type="text" placeholder="Bu sohbette ara..." autocomplete="off" class="w-full bg-[#131b2e] text-slate-200 pl-9 pr-10 py-2.5 rounded-xl text-xs focus:outline-none focus:ring-1 focus:ring-blue-500 transition-all">
+                    <button data-action="clear-message-search" class="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-white transition-colors" title="Aramayı temizle">
+                        <i class="fa-solid fa-xmark text-xs"></i>
+                    </button>
+                </div>
+            </div>
+
             <!-- Üst İsim Tıklama Menüsü -->
-            <div id="chatActionsMenu" class="hidden absolute top-16 left-4 bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow-2xl z-40 w-48 animate-fade-in">
+            <div id="chatActionsMenu" class="hidden absolute top-16 left-4 bg-slate-900 border border-slate-800 p-2 rounded-2xl shadow-2xl z-40 w-56 animate-fade-in">
+                <button data-action="open-profile-detail" class="w-full text-left text-slate-200 hover:bg-blue-500/10 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors">
+                    <i class="fa-regular fa-user"></i> Profil Detayı
+                </button>
+                <button data-action="toggle-pin-chat" class="w-full text-left text-slate-200 hover:bg-blue-500/10 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors">
+                    <i class="fa-solid fa-thumbtack"></i> Sabitle / Kaldır
+                </button>
+                <button data-action="toggle-mute-chat" class="w-full text-left text-slate-200 hover:bg-blue-500/10 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors">
+                    <i class="fa-regular fa-bell-slash"></i> Sessize Al / Aç
+                </button>
                 <button data-action="delete-chat-for-me" class="w-full text-left text-red-400 hover:bg-red-500/10 p-3 rounded-xl text-xs font-semibold flex items-center gap-2 transition-colors">
                     <i class="fa-solid fa-trash-can"></i> Sohbeti Temizle (Sil)
                 </button>
@@ -382,8 +477,16 @@
                     <i class="fa-solid fa-arrow-down"></i>
                 </button>
                 <div id="messageActionMenu" class="message-action-menu hidden">
+                    <div class="grid grid-cols-4 gap-1 px-1 pb-1 border-b border-slate-700/50 mb-1">
+                        <button data-action="react-selected-message" data-reaction="heart" class="justify-center text-base" title="Kalp">❤️</button>
+                        <button data-action="react-selected-message" data-reaction="like" class="justify-center text-base" title="Beğen">👍</button>
+                        <button data-action="react-selected-message" data-reaction="laugh" class="justify-center text-base" title="Gülme">😂</button>
+                        <button data-action="react-selected-message" data-reaction="pray" class="justify-center text-base" title="Dua">🙏</button>
+                    </div>
                     <button data-action="reply-selected-message" title="Yanıtla"><i class="fa-solid fa-reply"></i> Yanıtla</button>
                     <button data-action="copy-selected-message" title="Kopyala"><i class="fa-regular fa-copy"></i> Kopyala</button>
+                    <button data-action="edit-selected-message" data-owner-only="true" title="Düzenle"><i class="fa-regular fa-pen-to-square"></i> Düzenle</button>
+                    <button data-action="delete-selected-message-everyone" data-owner-only="true" class="text-amber-200 hover:text-amber-100" title="Herkesten Sil"><i class="fa-solid fa-ban"></i> Herkesten Sil</button>
                     <button data-action="delete-selected-message" class="text-red-300 hover:text-red-100" title="Sil"><i class="fa-regular fa-trash-can"></i> Sil</button>
                 </div>
             </div>
@@ -397,15 +500,16 @@
                 <button data-action="cancel-reply" class="text-slate-400 hover:text-white p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
-            <!-- Sabit Mesaj Giriş Alanı -->
-            <div id="stickerPanel" class="sticker-panel hidden">
-                <div id="stickerGrid" class="sticker-grid"></div>
-                <p id="stickerPanelNote" class="hidden text-[11px] text-slate-400 leading-relaxed"></p>
+            <div id="editPreviewBar" class="hidden px-5 py-3 bg-[#0c1224] border-t border-slate-900 flex items-center justify-between shrink-0 rounded-t-2xl animate-fade-in">
+                <div class="border-l-2 border-amber-400 pl-3 min-w-0">
+                    <span class="text-[10px] text-amber-300 font-bold block">Mesaj düzenleniyor</span>
+                    <span id="editPreviewText" class="text-xs text-slate-400 truncate max-w-xs block">Mesaj</span>
+                </div>
+                <button data-action="cancel-edit-message" class="text-slate-400 hover:text-white p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
+
+            <!-- Sabit Mesaj Giriş Alanı -->
             <div class="px-4 py-3 theme-sidebar border-t border-slate-900/60 flex items-end gap-3 shrink-0">
-                <button id="stickerToggleBtn" data-action="toggle-sticker-panel" type="button" class="w-11 h-11 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl flex items-center justify-center transition-colors shrink-0" title="Emoji ve sticker">
-                    <i class="fa-regular fa-face-smile text-lg"></i>
-                </button>
                 <textarea id="messageInput" rows="1" placeholder="Bir mesaj yazın..." class="flex-1 max-h-32 resize-none bg-[#131b2e] text-slate-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm transition-all leading-relaxed"></textarea>
                 <button data-action="send-message" class="w-11 h-11 theme-btn active:scale-95 text-white rounded-xl flex items-center justify-center transition-all shadow-md shrink-0">
                     <i class="fa-solid fa-paper-plane text-sm pl-0.5"></i>
@@ -565,6 +669,35 @@
         </div>
     </div>
 
+    <div id="profileDetailModal" class="hidden fixed inset-0 bg-black/75 backdrop-blur-md z-50 flex items-center justify-center p-4">
+        <div class="bg-[#0f172a] border border-slate-800 p-6 rounded-[2rem] w-full max-w-sm shadow-2xl animate-fade-in">
+            <div class="flex justify-between items-center mb-5">
+                <h3 class="text-sm font-bold text-white">Profil Detayı</h3>
+                <button data-action="close-profile-detail" class="text-slate-400 hover:text-white transition-colors"><i class="fa-solid fa-xmark text-lg"></i></button>
+            </div>
+            <div class="flex flex-col items-center text-center gap-3">
+                <div id="profileDetailAvatar" class="w-20 h-20 theme-btn rounded-2xl flex items-center justify-center text-white font-bold text-xl overflow-hidden shadow-lg">
+                    -
+                </div>
+                <div>
+                    <h4 id="profileDetailName" class="text-white font-bold text-lg">-</h4>
+                    <p id="profileDetailStatus" class="text-xs text-slate-400 mt-1">Yükleniyor...</p>
+                </div>
+            </div>
+            <div class="grid grid-cols-2 gap-2 mt-6">
+                <button data-action="toggle-mute-chat" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                    <i class="fa-regular fa-bell-slash"></i> Sessiz
+                </button>
+                <button data-action="toggle-pin-chat" class="bg-slate-800 hover:bg-slate-700 text-slate-200 py-3 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition-colors">
+                    <i class="fa-solid fa-thumbtack"></i> Sabitle
+                </button>
+            </div>
+            <button type="button" class="mt-3 w-full bg-slate-900 text-slate-500 py-3 rounded-xl text-xs font-bold cursor-not-allowed" disabled>
+                Engelleme yakında admin güvenliğiyle eklenecek
+            </button>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT GÜVENLİK VE VERİ MANTIĞI -->
     <script>
         // Firebase Konfigürasyonu
@@ -595,6 +728,13 @@
         const ALLOWED_AVATAR_HOSTS = new Set(["knsriucinxcxmbkbfzqf.supabase.co", "images.unsplash.com"]);
         const CHAT_LIST_ALIAS_QUERY_LIMIT = 10;
         const MESSAGE_PAGE_SIZE = 50;
+        const MESSAGE_LIMIT_MAX = 300;
+        const REACTION_META = {
+            heart: "❤️",
+            like: "👍",
+            laugh: "😂",
+            pray: "🙏"
+        };
 
         function normalizeUsername(value) {
             return String(value || "").trim().toLowerCase();
@@ -876,6 +1016,16 @@
             document.getElementById("stickerPanel")?.classList.add("hidden");
         }
 
+        function setAppViewportHeight() {
+            const height = window.visualViewport?.height || window.innerHeight;
+            document.documentElement.style.setProperty("--app-viewport-height", `${Math.round(height)}px`);
+        }
+
+        setAppViewportHeight();
+        window.visualViewport?.addEventListener("resize", setAppViewportHeight);
+        window.visualViewport?.addEventListener("scroll", setAppViewportHeight);
+        window.addEventListener("orientationchange", () => setTimeout(setAppViewportHeight, 250));
+
         function toggleStickerPanel() {
             const panel = document.getElementById("stickerPanel");
             if (!panel) return;
@@ -1017,6 +1167,54 @@
             });
         }
 
+        function isOwnSender(sender) {
+            return currentUserAliases.includes(normalizeUsername(sender));
+        }
+
+        function getReactionEntries(reactions = {}) {
+            if (!reactions || typeof reactions !== "object") return [];
+            return Object.entries(REACTION_META)
+                .map(([key, emoji]) => {
+                    const users = Array.isArray(reactions[key]) ? reactions[key].filter(Boolean) : [];
+                    return { key, emoji, users };
+                })
+                .filter((item) => item.users.length > 0);
+        }
+
+        function renderReactionHtml(reactions = {}) {
+            const entries = getReactionEntries(reactions);
+            if (!entries.length) return "";
+
+            return `
+                <div class="message-reactions">
+                    ${entries.map((item) => `
+                        <span class="reaction-chip">
+                            <span>${item.emoji}</span>
+                            <span>${item.users.length}</span>
+                        </span>
+                    `).join("")}
+                </div>
+            `;
+        }
+
+        function filterRenderedMessages() {
+            const term = messageSearchTerm.trim().toLowerCase();
+            document.querySelectorAll("[data-message-row]").forEach((row) => {
+                const text = (row.getAttribute("data-message-search") || "").toLowerCase();
+                const isHit = Boolean(term && text.includes(term));
+                row.classList.toggle("hidden", Boolean(term && !isHit));
+                row.classList.toggle("message-search-hit", isHit);
+            });
+        }
+
+        function isChatPinned(chat, userKey) {
+            return Boolean(chat?.pinnedBy && chat.pinnedBy[userKey]);
+        }
+
+        function isChatMuted(chat, userKey) {
+            return Boolean(chat?.mutedBy && chat.mutedBy[userKey]);
+        }
+
         // Yerel Biyometri Helper Fonksiyonları
         function bufferToBase64(buffer) {
             return btoa(String.fromCharCode(...new Uint8Array(buffer)));
@@ -1049,7 +1247,16 @@
         let activeChatId = null;
         let otherUser = null;
         let chatSearchTerm = "";
+        let messageSearchTerm = "";
         let selectedMessageAction = null;
+        let messageLongPressTimer = null;
+        let messageLongPressTarget = null;
+        let messageLongPressPoint = null;
+        let editingMessageId = null;
+        let editingOriginalText = "";
+        let activeMessageLimit = MESSAGE_PAGE_SIZE;
+        let isExpandingMessages = false;
+        let preserveScrollDistanceFromBottom = null;
         let shouldScrollOnNextMessages = false;
         let soundNotificationsEnabled = true;
         const userProfileCache = {};
@@ -1817,6 +2024,59 @@
         function closeSettingsModal() { document.getElementById("settingsModal").classList.add("hidden"); }
         function toggleChatActionsMenu() { document.getElementById("chatActionsMenu").classList.toggle("hidden"); }
 
+        function toggleMessageSearch() {
+            const bar = document.getElementById("messageSearchBar");
+            const input = document.getElementById("messageSearchInput");
+            if (!bar || !input) return;
+            bar.classList.toggle("hidden");
+            if (!bar.classList.contains("hidden")) {
+                input.focus();
+            } else {
+                clearMessageSearch();
+            }
+        }
+
+        function clearMessageSearch() {
+            messageSearchTerm = "";
+            const input = document.getElementById("messageSearchInput");
+            if (input) input.value = "";
+            filterRenderedMessages();
+        }
+
+        async function openProfileDetail() {
+            if (!otherUser) return;
+            const profile = await getUserProfile(otherUser);
+            applyAvatar(document.getElementById("profileDetailAvatar"), otherUser, profile.avatarUrl);
+            document.getElementById("profileDetailName").innerText = `@${otherUser.toUpperCase()}`;
+            document.getElementById("profileDetailStatus").innerText = isUserOnline(profile) ? "Çevrimiçi" : formatLastSeen(profile.lastActive);
+            document.getElementById("profileDetailModal").classList.remove("hidden");
+            document.getElementById("chatActionsMenu").classList.add("hidden");
+        }
+
+        function closeProfileDetail() {
+            document.getElementById("profileDetailModal").classList.add("hidden");
+        }
+
+        async function togglePinChat() {
+            if (!activeChatId || !currentUser) return;
+            const chatUserKey = currentChatUserKey || currentUser;
+            const chatRef = db.collection("chats").doc(activeChatId);
+            const chatDoc = await chatRef.get();
+            const isPinned = Boolean(chatDoc.data()?.pinnedBy && chatDoc.data().pinnedBy[chatUserKey]);
+            await chatRef.update({ [`pinnedBy.${chatUserKey}`]: !isPinned });
+            document.getElementById("chatActionsMenu").classList.add("hidden");
+        }
+
+        async function toggleMuteChat() {
+            if (!activeChatId || !currentUser) return;
+            const chatUserKey = currentChatUserKey || currentUser;
+            const chatRef = db.collection("chats").doc(activeChatId);
+            const chatDoc = await chatRef.get();
+            const isMuted = Boolean(chatDoc.data()?.mutedBy && chatDoc.data().mutedBy[chatUserKey]);
+            await chatRef.update({ [`mutedBy.${chatUserKey}`]: !isMuted });
+            document.getElementById("chatActionsMenu").classList.add("hidden");
+        }
+
         async function deleteChatForMe() {
             if (!activeChatId || !currentUser) return;
             const chatUserKey = currentChatUserKey || currentUser;
@@ -1965,6 +2225,11 @@
             otherUser = targetUserDoc;
             currentChatUserKey = chatUserKey;
             shouldScrollOnNextMessages = true;
+            activeMessageLimit = MESSAGE_PAGE_SIZE;
+            preserveScrollDistanceFromBottom = null;
+            isExpandingMessages = false;
+            clearMessageSearch();
+            cancelEditMessage();
             closeMessageActionMenu();
             closeStickerPanel();
 
@@ -2014,13 +2279,78 @@
             document.getElementById("replyPreviewBar").classList.add("hidden");
         }
 
-        function openMessageActionMenu(msgId, sender, text) {
-            selectedMessageAction = { msgId, sender, text };
+        function cancelEditMessage() {
+            editingMessageId = null;
+            editingOriginalText = "";
+            document.getElementById("editPreviewBar")?.classList.add("hidden");
+            const input = document.getElementById("messageInput");
+            if (input) {
+                input.value = "";
+                resizeMessageInput();
+            }
+        }
+
+        function positionMessageActionMenu(menu, anchorEl) {
+            const rect = anchorEl?.getBoundingClientRect();
+            const menuWidth = 190;
+            const menuHeight = 150;
+            let left = rect ? rect.left + (rect.width / 2) : window.innerWidth / 2;
+            let top = rect ? rect.top - 12 : window.innerHeight / 2;
+
+            if (rect && top < 78) top = rect.bottom + 16;
+            left = Math.max(16 + menuWidth / 2, Math.min(window.innerWidth - 16 - menuWidth / 2, left));
+            top = Math.max(78, Math.min(window.innerHeight - 84, top));
+
+            menu.style.left = `${left}px`;
+            menu.style.top = `${top}px`;
+        }
+
+        function clearMessageLongPressState() {
+            if (messageLongPressTimer) {
+                clearTimeout(messageLongPressTimer);
+                messageLongPressTimer = null;
+            }
+            messageLongPressTarget?.classList.remove("message-hold-active");
+            messageLongPressTarget = null;
+            messageLongPressPoint = null;
+        }
+
+        function openMessageActionMenu(msgId, sender, text, anchorEl = null, reactions = {}) {
+            clearMessageLongPressState();
+            selectedMessageAction = { msgId, sender, text, reactions, isMine: isOwnSender(sender) };
             const menu = document.getElementById("messageActionMenu");
-            if (menu) menu.classList.remove("hidden");
+            if (!menu) return;
+            closeStickerPanel();
+            menu.classList.remove("hidden");
+            menu.querySelectorAll("[data-owner-only]").forEach((button) => {
+                button.classList.toggle("hidden", !selectedMessageAction.isMine);
+            });
+            positionMessageActionMenu(menu, anchorEl);
+        }
+
+        function startMessageLongPress(event, msgId, sender, text, reactions = {}) {
+            if (event.pointerType === "mouse" && event.button !== 0) return;
+            if (event.target.closest(".reply-jump")) return;
+
+            clearMessageLongPressState();
+            messageLongPressTarget = event.currentTarget;
+            messageLongPressPoint = { x: event.clientX, y: event.clientY };
+            messageLongPressTarget.classList.add("message-hold-active");
+            messageLongPressTimer = setTimeout(() => {
+                if (navigator.vibrate) navigator.vibrate(12);
+                openMessageActionMenu(msgId, sender, text, messageLongPressTarget, reactions);
+            }, 520);
+        }
+
+        function moveMessageLongPress(event) {
+            if (!messageLongPressPoint) return;
+            const deltaX = Math.abs(event.clientX - messageLongPressPoint.x);
+            const deltaY = Math.abs(event.clientY - messageLongPressPoint.y);
+            if (deltaX > 10 || deltaY > 10) clearMessageLongPressState();
         }
 
         function closeMessageActionMenu() {
+            clearMessageLongPressState();
             selectedMessageAction = null;
             document.getElementById("messageActionMenu")?.classList.add("hidden");
         }
@@ -2058,6 +2388,65 @@
             closeMessageActionMenu();
         }
 
+        async function reactSelectedMessage(reactionKey) {
+            if (!selectedMessageAction || !activeChatId || !currentUser || !REACTION_META[reactionKey]) return;
+            const messageRef = db.collection("chats").doc(activeChatId).collection("messages").doc(selectedMessageAction.msgId);
+            const messageDoc = await messageRef.get();
+            const reactions = messageDoc.data()?.reactions || {};
+            const updates = {};
+
+            Object.keys(REACTION_META).forEach((key) => {
+                updates[`reactions.${key}`] = firebase.firestore.FieldValue.arrayRemove(currentUser);
+            });
+
+            const alreadyReacted = Array.isArray(reactions[reactionKey]) && reactions[reactionKey].includes(currentUser);
+            if (!alreadyReacted) {
+                updates[`reactions.${reactionKey}`] = firebase.firestore.FieldValue.arrayUnion(currentUser);
+            }
+
+            await messageRef.update(updates);
+            closeMessageActionMenu();
+        }
+
+        function editSelectedMessage() {
+            if (!selectedMessageAction?.isMine) return;
+            editingMessageId = selectedMessageAction.msgId;
+            editingOriginalText = selectedMessageAction.text;
+            const input = document.getElementById("messageInput");
+            const previewText = document.getElementById("editPreviewText");
+            if (input) {
+                input.value = selectedMessageAction.text;
+                resizeMessageInput();
+                input.focus();
+            }
+            if (previewText) previewText.innerText = selectedMessageAction.text;
+            document.getElementById("editPreviewBar")?.classList.remove("hidden");
+            closeMessageActionMenu();
+        }
+
+        async function deleteSelectedMessageForEveryone() {
+            if (!selectedMessageAction?.isMine || !activeChatId || !currentUser) return;
+            const confirmDelete = confirm("Bu mesaj herkes için silinsin mi?");
+            if (!confirmDelete) return;
+
+            const messageRef = db.collection("chats").doc(activeChatId).collection("messages").doc(selectedMessageAction.msgId);
+            await messageRef.update({
+                deletedForEveryone: true,
+                deletedAt: Date.now(),
+                deletedBy: currentUser,
+                text: ""
+            });
+
+            const latest = await db.collection("chats").doc(activeChatId).collection("messages").orderBy("timestamp", "desc").limit(1).get();
+            if (!latest.empty && latest.docs[0].id === selectedMessageAction.msgId) {
+                await db.collection("chats").doc(activeChatId).update({
+                    lastMessageText: "Mesaj silindi",
+                    lastMessageStatus: "sent"
+                });
+            }
+            closeMessageActionMenu();
+        }
+
         document.getElementById("replyPreviewBar").addEventListener("click", (e) => {
             if (replyingToMsgId && !e.target.closest('button')) {
                 scrollToMessage(replyingToMsgId);
@@ -2087,7 +2476,7 @@
 
             const messagesRef = db.collection("chats").doc(activeChatId).collection("messages");
             
-            unsubMessages = messagesRef.orderBy("timestamp", "desc").limit(MESSAGE_PAGE_SIZE).onSnapshot((snapshot) => {
+            unsubMessages = messagesRef.orderBy("timestamp", "desc").limit(activeMessageLimit).onSnapshot((snapshot) => {
                 const container = document.getElementById("messageContainer");
                 const wasNearBottom = isChatNearBottom();
                 container.innerHTML = "";
@@ -2126,11 +2515,14 @@
                     }
 
                     const timeStr = formatTime(msg.timestamp);
-                    const messageText = sanitizeMessageText(msg.text);
+                    const isDeletedForEveryone = Boolean(msg.deletedForEveryone);
+                    const messageText = isDeletedForEveryone ? "Mesaj silindi" : sanitizeMessageText(msg.text);
                     const msgIdAttr = escapeAttr(msg.id);
                     const senderAttr = escapeAttr(msg.sender);
                     const messageAttr = escapeAttr(messageText);
                     const currentDateKey = dateKey(msg.timestamp);
+                    const editedLabel = msg.editedAt && !isDeletedForEveryone ? '<span class="opacity-75">düzenlendi</span>' : "";
+                    const reactionHtml = renderReactionHtml(msg.reactions);
 
                     if (currentDateKey && currentDateKey !== lastRenderedDateKey) {
                         container.insertAdjacentHTML("beforeend", `<div class="date-divider">${escapeHtml(formatDateDivider(msg.timestamp))}</div>`);
@@ -2151,25 +2543,36 @@
                     }
 
                     const msgHtml = `
-                        <div id="msg_${msgIdAttr}" class="flex flex-col max-w-[82%] ${isMe ? 'ml-auto items-end' : 'items-start'} transition-all duration-300">
-                            <div class="message-content px-3.5 py-2.5 rounded-2xl ${roundedStyle} shadow-md border border-white/5 cursor-pointer transition-all hover:brightness-110" style="${bgStyle}" data-msg-id="${msgIdAttr}" data-msg-sender="${senderAttr}" data-msg-text="${messageAttr}">
+                        <div id="msg_${msgIdAttr}" data-message-row data-message-search="${messageAttr}" class="flex flex-col max-w-[82%] ${isMe ? 'ml-auto items-end' : 'items-start'} transition-all duration-300">
+                            <div class="message-content px-3.5 py-2.5 rounded-2xl ${roundedStyle} shadow-md border border-white/5 cursor-pointer transition-all hover:brightness-110 ${isDeletedForEveryone ? 'opacity-70 italic' : ''}" style="${bgStyle}" data-msg-id="${msgIdAttr}" data-msg-sender="${senderAttr}" data-msg-text="${messageAttr}">
                                 ${replyBlockHtml}
                                 <p class="text-[13px] leading-relaxed whitespace-pre-line">${escapeHtml(messageText)}</p>
                                 <div class="flex items-center justify-end gap-1 mt-1 text-[8px] ${isMe ? 'text-blue-200' : 'text-slate-400'}">
                                     <span>${timeStr}</span>
+                                    ${editedLabel}
                                     ${ticks}
                                 </div>
                             </div>
+                            ${reactionHtml}
                         </div>
                     `;
                     container.insertAdjacentHTML("beforeend", msgHtml);
                     const renderedMessage = container.lastElementChild;
                     const contentEl = renderedMessage?.querySelector(".message-content");
-                    contentEl?.addEventListener("click", () => {
-                        openMessageActionMenu(msg.id, msg.sender, messageText);
+                    contentEl?.addEventListener("pointerdown", (event) => {
+                        if (!isDeletedForEveryone) startMessageLongPress(event, msg.id, msg.sender, messageText, msg.reactions || {});
+                    });
+                    contentEl?.addEventListener("pointermove", moveMessageLongPress);
+                    contentEl?.addEventListener("pointerup", clearMessageLongPressState);
+                    contentEl?.addEventListener("pointercancel", clearMessageLongPressState);
+                    contentEl?.addEventListener("pointerleave", clearMessageLongPressState);
+                    contentEl?.addEventListener("contextmenu", (event) => {
+                        event.preventDefault();
+                        if (!isDeletedForEveryone) openMessageActionMenu(msg.id, msg.sender, messageText, contentEl, msg.reactions || {});
                     });
                     contentEl?.addEventListener("dblclick", () => {
-                        triggerReply(msg.id, msg.sender, messageText);
+                        clearMessageLongPressState();
+                        if (!isDeletedForEveryone) triggerReply(msg.id, msg.sender, messageText);
                     });
                     renderedMessage?.querySelectorAll(".reply-jump").forEach((replyEl) => {
                         replyEl.addEventListener("click", (event) => {
@@ -2184,7 +2587,14 @@
                     db.collection("chats").doc(activeChatId).update({ lastMessageStatus: "read" });
                 }
 
-                if (shouldScrollOnNextMessages || wasNearBottom) {
+                filterRenderedMessages();
+
+                if (isExpandingMessages && preserveScrollDistanceFromBottom !== null) {
+                    container.scrollTop = Math.max(0, container.scrollHeight - preserveScrollDistanceFromBottom);
+                    preserveScrollDistanceFromBottom = null;
+                    isExpandingMessages = false;
+                    updateScrollBottomButton();
+                } else if (shouldScrollOnNextMessages || wasNearBottom) {
                     scrollActiveChatToBottom();
                     shouldScrollOnNextMessages = false;
                 } else {
@@ -2256,6 +2666,29 @@
             const now = Date.now();
 
             try {
+                if (editingMessageId) {
+                    const editingRef = db.collection("chats").doc(activeChatId).collection("messages").doc(editingMessageId);
+                    await editingRef.update({
+                        text,
+                        editedAt: now,
+                        editedBy: currentUser
+                    });
+
+                    const latest = await db.collection("chats").doc(activeChatId).collection("messages").orderBy("timestamp", "desc").limit(1).get();
+                    if (!latest.empty && latest.docs[0].id === editingMessageId) {
+                        await db.collection("chats").doc(activeChatId).update({
+                            lastMessageText: text,
+                            lastMessageStatus: "sent"
+                        });
+                    }
+
+                    input.value = "";
+                    resizeMessageInput();
+                    cancelEditMessage();
+                    input.focus();
+                    return;
+                }
+
                 const msgPayload = {
                     sender: currentUser,
                     text: text,
