@@ -593,6 +593,8 @@
         const PIN_PATTERN = /^\S{4,32}$/;
         const ALLOWED_BACKGROUND_HOSTS = new Set(["images.unsplash.com"]);
         const ALLOWED_AVATAR_HOSTS = new Set(["knsriucinxcxmbkbfzqf.supabase.co", "images.unsplash.com"]);
+        const CHAT_LIST_ALIAS_QUERY_LIMIT = 10;
+        const MESSAGE_PAGE_SIZE = 50;
 
         function normalizeUsername(value) {
             return String(value || "").trim().toLowerCase();
@@ -604,6 +606,13 @@
 
         function isValidPin(value) {
             return PIN_PATTERN.test(String(value || ""));
+        }
+
+        function getCurrentUserChatAliases() {
+            return Array.from(new Set([currentUser, ...currentUserAliases]
+                .map(normalizeUsername)
+                .filter(isValidUsername)
+            )).slice(0, CHAT_LIST_ALIAS_QUERY_LIMIT);
         }
 
         function escapeHtml(value) {
@@ -1649,6 +1658,7 @@
             const errEl = document.getElementById("usernameChangeError");
             let avatarUrlInput = document.getElementById("settingsAvatarUrlInput").value.trim();
             const avatarErrEl = document.getElementById("avatarUrlError");
+            const previousUsernameBeforeSave = currentUser;
 
             errEl.classList.add("hidden");
             avatarErrEl.classList.add("hidden");
@@ -1719,6 +1729,7 @@
                     });
 
                     currentUser = newUsernameInput;
+                    currentUserAliases = Array.from(new Set([newUsernameInput, previousUsername, ...currentUserAliases]));
                     if (localStorage.getItem("remembered_user")) {
                         localStorage.setItem("remembered_user", newUsernameInput);
                     }
@@ -1733,10 +1744,11 @@
                     username: newUsernameInput,
                     avatarUrl: avatarUrlInput
                 };
-                if (newUsernameInput !== currentUser) delete userProfileCache[currentUser];
+                if (newUsernameInput !== previousUsernameBeforeSave) delete userProfileCache[previousUsernameBeforeSave];
                 applyAvatar(document.getElementById("myAvatar"), newUsernameInput, avatarUrlInput);
                 applyThemeColors(safeThemeName);
                 applyChatBackground(themePresets[safeThemeName].bg);
+                if (newUsernameInput !== previousUsernameBeforeSave) loadActiveChatsList();
 
                 closeSettingsModal();
                 document.getElementById("settingsPinInput").value = "";
@@ -2075,7 +2087,7 @@
 
             const messagesRef = db.collection("chats").doc(activeChatId).collection("messages");
             
-            unsubMessages = messagesRef.orderBy("timestamp", "desc").limit(50).onSnapshot((snapshot) => {
+            unsubMessages = messagesRef.orderBy("timestamp", "desc").limit(MESSAGE_PAGE_SIZE).onSnapshot((snapshot) => {
                 const container = document.getElementById("messageContainer");
                 const wasNearBottom = isChatNearBottom();
                 container.innerHTML = "";
@@ -2403,9 +2415,22 @@
             if (unsubChatList) unsubChatList();
             lastProcessedTimes = {};
             let isInitialSnapshot = true;
+            const chatAliases = getCurrentUserChatAliases();
+            const listContainer = document.getElementById("chatList");
 
-            unsubChatList = db.collection("chats").orderBy("lastMessageTime", "desc").onSnapshot((snapshot) => {
-                const listContainer = document.getElementById("chatList");
+            if (!chatAliases.length) {
+                listContainer.innerHTML = "";
+                return;
+            }
+
+            if (currentUserAliases.length > CHAT_LIST_ALIAS_QUERY_LIMIT) {
+                console.warn(`Sohbet sorgusu ilk ${CHAT_LIST_ALIAS_QUERY_LIMIT} kullanıcı adını kullanıyor. Eski kullanıcı adı sayısı azaltılmalı.`);
+            }
+
+            unsubChatList = db.collection("chats")
+                .where("users", "array-contains-any", chatAliases)
+                .orderBy("lastMessageTime", "desc")
+                .onSnapshot((snapshot) => {
                 listContainer.innerHTML = "";
                 let hasChat = false;
 
@@ -2530,6 +2555,11 @@
                 filterVisibleChatRows();
             }, (err) => {
                 console.error("Sohbet listesi dinleme hatası:", err);
+                listContainer.innerHTML = `
+                    <div class="p-4 text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-2xl leading-relaxed">
+                        Sohbet listesi güvenli sorgu ile yüklenemedi. Firestore index veya kural ayarı gerekebilir.
+                    </div>
+                `;
             });
         }
 
