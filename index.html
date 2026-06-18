@@ -87,7 +87,6 @@
             overflow-wrap: anywhere;
             user-select: none;
             -webkit-user-select: none;
-            -webkit-touch-callout: none; /* Mobil tarayıcılarda varsayılan basılı tutma kopyalama menüsünü engellemek için */
             -webkit-tap-highlight-color: transparent;
             touch-action: manipulation;
         }
@@ -132,7 +131,7 @@
 
         .message-action-menu.hidden,
         .scroll-bottom-btn.hidden {
-            display: none !important;
+            display: none;
         }
 
         .message-action-menu button,
@@ -201,15 +200,6 @@
         @keyframes menu-pop {
             from { opacity: 0; transform: translate(-50%, -46%) scale(0.94); }
             to { opacity: 1; transform: translate(-50%, -50%) scale(1); }
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(4px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        
-        .animate-fade-in {
-            animation: fadeIn 0.2s cubic-bezier(0.4, 0, 0.2, 1) forwards;
         }
 
         .scroll-bottom-btn {
@@ -486,18 +476,6 @@
                 <button id="scrollBottomBtn" data-action="scroll-bottom" class="scroll-bottom-btn hidden" title="En alta in">
                     <i class="fa-solid fa-arrow-down"></i>
                 </button>
-
-                <!-- STICKER PANELİ -->
-                <div id="stickerPanel" class="sticker-panel hidden">
-                    <div class="flex justify-between items-center mb-2 pb-1 border-b border-slate-800">
-                        <span class="text-[10px] text-slate-400 font-bold uppercase tracking-wider">Çıkartmalar</span>
-                        <span id="stickerPanelNote" class="text-[10px] text-amber-400 hidden"></span>
-                        <button data-action="toggle-sticker-panel" class="text-slate-400 hover:text-white" title="Paneli Kapat"><i class="fa-solid fa-xmark"></i></button>
-                    </div>
-                    <div id="stickerGrid" class="sticker-grid"></div>
-                </div>
-
-                <!-- MESAJ AKSİYON MENÜSÜ -->
                 <div id="messageActionMenu" class="message-action-menu hidden">
                     <div class="grid grid-cols-4 gap-1 px-1 pb-1 border-b border-slate-700/50 mb-1">
                         <button data-action="react-selected-message" data-reaction="heart" class="justify-center text-base" title="Kalp">❤️</button>
@@ -522,7 +500,6 @@
                 <button data-action="cancel-reply" class="text-slate-400 hover:text-white p-1 transition-colors"><i class="fa-solid fa-xmark text-sm"></i></button>
             </div>
 
-            <!-- DÜZENLEME ÖNİZLEME ALANI -->
             <div id="editPreviewBar" class="hidden px-5 py-3 bg-[#0c1224] border-t border-slate-900 flex items-center justify-between shrink-0 rounded-t-2xl animate-fade-in">
                 <div class="border-l-2 border-amber-400 pl-3 min-w-0">
                     <span class="text-[10px] text-amber-300 font-bold block">Mesaj düzenleniyor</span>
@@ -532,11 +509,7 @@
             </div>
 
             <!-- Sabit Mesaj Giriş Alanı -->
-            <div class="px-4 py-3 theme-sidebar border-t border-slate-900/60 flex items-end gap-3 shrink-0 relative">
-                <!-- Sticker Tetikleyici Buton -->
-                <button id="stickerToggleBtn" data-action="toggle-sticker-panel" title="Sticker Seç" class="w-11 h-11 bg-[#131b2e] hover:bg-slate-800 text-slate-300 rounded-xl flex items-center justify-center transition-all shrink-0">
-                    <i class="fa-regular fa-face-smile text-lg"></i>
-                </button>
+            <div class="px-4 py-3 theme-sidebar border-t border-slate-900/60 flex items-end gap-3 shrink-0">
                 <textarea id="messageInput" rows="1" placeholder="Bir mesaj yazın..." class="flex-1 max-h-32 resize-none bg-[#131b2e] text-slate-100 px-4 py-3 rounded-xl focus:outline-none focus:ring-1 focus:ring-blue-500 text-sm transition-all leading-relaxed"></textarea>
                 <button data-action="send-message" class="w-11 h-11 theme-btn active:scale-95 text-white rounded-xl flex items-center justify-center transition-all shadow-md shrink-0">
                     <i class="fa-solid fa-paper-plane text-sm pl-0.5"></i>
@@ -2480,7 +2453,7 @@
             }
         });
 
-        async function scrollToMessage(msgId) {
+        function scrollToMessage(msgId) {
             if (window.innerWidth < 768) {
                 document.getElementById("messageInput").blur();
             }
@@ -2490,20 +2463,6 @@
                 element.scrollIntoView({ behavior: 'smooth', block: 'center' });
                 element.classList.add("highlight-message");
                 setTimeout(() => { element.classList.remove("highlight-message"); }, 1500);
-            } else {
-                if (activeMessageLimit < MESSAGE_LIMIT_MAX) {
-                    isExpandingMessages = true;
-                    activeMessageLimit = Math.min(activeMessageLimit + MESSAGE_PAGE_SIZE, MESSAGE_LIMIT_MAX);
-                    await listenMessages();
-                    setTimeout(() => {
-                        const target = document.getElementById(`msg_${msgId}`);
-                        if (target) {
-                            target.scrollIntoView({ behavior: 'smooth', block: 'center' });
-                            target.classList.add("highlight-message");
-                            setTimeout(() => { target.classList.remove("highlight-message"); }, 1500);
-                        }
-                    }, 400);
-                }
             }
         }
 
@@ -2807,21 +2766,11 @@
                 "reply-selected-message": () => replySelectedMessage(),
                 "copy-selected-message": () => copySelectedMessage(),
                 "delete-selected-message": () => deleteSelectedMessageForMe(),
-                "delete-selected-message-everyone": () => deleteSelectedMessageForEveryone(),
-                "react-selected-message": () => reactSelectedMessage(actionEl.dataset.reaction),
-                "edit-selected-message": () => editSelectedMessage(),
-                "cancel-edit-message": () => cancelEditMessage(),
                 "cancel-reply": () => cancelReply(),
                 "choose-avatar-file": () => document.getElementById("settingsAvatarFileInput")?.click(),
                 "clear-selected-avatar": () => clearSelectedAvatar(),
                 "toggle-sticker-panel": () => toggleStickerPanel(),
-                "insert-sticker": () => insertSticker(actionEl.dataset.sticker || ""),
-                "toggle-message-search": () => toggleMessageSearch(),
-                "clear-message-search": () => clearMessageSearch(),
-                "open-profile-detail": () => openProfileDetail(),
-                "close-profile-detail": () => closeProfileDetail(),
-                "toggle-pin-chat": () => togglePinChat(),
-                "toggle-mute-chat": () => toggleMuteChat()
+                "insert-sticker": () => insertSticker(actionEl.dataset.sticker || "")
             };
 
             if (!actions[action]) return;
@@ -2864,11 +2813,6 @@
             filterVisibleChatRows();
         });
 
-        document.getElementById("messageSearchInput")?.addEventListener("input", (event) => {
-            messageSearchTerm = event.target.value;
-            filterRenderedMessages();
-        });
-
         document.getElementById("settingsAvatarUrlInput")?.addEventListener("input", updateSettingsAvatarPreview);
         document.getElementById("settingsUsernameInput")?.addEventListener("input", updateSettingsAvatarPreview);
         document.getElementById("settingsAvatarFileInput")?.addEventListener("change", handleAvatarFileSelection);
@@ -2878,18 +2822,16 @@
             if (!event.target.closest("#stickerPanel") && !event.target.closest("#stickerToggleBtn")) {
                 closeStickerPanel();
             }
+        });
+
+        document.getElementById("messageContainer").addEventListener("scroll", updateScrollBottomButton);
+        document.getElementById("activeChatContainer").addEventListener("touchstart", handleChatSwipeStart, { passive: true });
+        document.getElementById("activeChatContainer").addEventListener("touchend", handleChatSwipeEnd, { passive: true });
+        document.getElementById("chatBackground").addEventListener("click", (event) => {
             if (!event.target.closest(".message-content") && !event.target.closest("#messageActionMenu")) {
                 closeMessageActionMenu();
             }
         });
-
-        document.getElementById("messageContainer").addEventListener("scroll", () => {
-            clearMessageLongPressState();
-            updateScrollBottomButton();
-        });
-        
-        document.getElementById("activeChatContainer").addEventListener("touchstart", handleChatSwipeStart, { passive: true });
-        document.getElementById("activeChatContainer").addEventListener("touchend", handleChatSwipeEnd, { passive: true });
 
         document.getElementById("soundNotificationsToggle")?.addEventListener("change", (event) => {
             soundNotificationsEnabled = event.target.checked;
@@ -2915,32 +2857,26 @@
             }
 
             if (currentUserAliases.length > CHAT_LIST_ALIAS_QUERY_LIMIT) {
-                console.warn(`Sohbet sorgusu ilk ${CHAT_LIST_ALIAS_QUERY_LIMIT} kullanıcı adını kullanıyor.`);
+                console.warn(`Sohbet sorgusu ilk ${CHAT_LIST_ALIAS_QUERY_LIMIT} kullanıcı adını kullanıyor. Eski kullanıcı adı sayısı azaltılmalı.`);
             }
 
-            // Firestore composite index gereksinimini ortadan kaldırmak için sıralama yerel olarak yapılır
             unsubChatList = db.collection("chats")
                 .where("users", "array-contains-any", chatAliases)
+                .orderBy("lastMessageTime", "desc")
                 .onSnapshot((snapshot) => {
                 listContainer.innerHTML = "";
                 let hasChat = false;
 
-                const chatsDataArray = [];
-                snapshot.forEach(doc => {
-                    chatsDataArray.push(doc.data());
-                });
-
-                // Son mesaja göre azalan sıralama (Yerel)
-                chatsDataArray.sort((a, b) => (b.lastMessageTime || 0) - (a.lastMessageTime || 0));
-
                 if (isInitialSnapshot) {
-                    chatsDataArray.forEach(chat => {
+                    snapshot.forEach(doc => {
+                        const chat = doc.data();
                         lastProcessedTimes[chat.chatId] = chat.lastMessageTime || 0;
                     });
                     isInitialSnapshot = false;
                 }
 
-                chatsDataArray.forEach((chat) => {
+                snapshot.forEach((doc) => {
+                    const chat = doc.data();
                     const myChatKey = Array.isArray(chat.users)
                         ? chat.users.find(user => currentUserAliases.includes(user))
                         : null;
@@ -2961,21 +2897,24 @@
                         // --- BİLDİRİM TETİKLEME ALGORİTMASI ---
                         const msgTime = chat.lastMessageTime;
                         if (lastSender && lastSender !== currentUser && msgTime > (lastProcessedTimes[chat.chatId] || 0)) {
-                            const isVeryRecent = (Date.now() - msgTime) < 5000;
+                            const isVeryRecent = (Date.now() - msgTime) < 5000; // Son 5 saniye içinde mi geldi?
                             
+                            // Zaman kaydını güncelle
                             lastProcessedTimes[chat.chatId] = msgTime;
 
                             if (isVeryRecent) {
+                                // Eğer bu pencere aktif olarak açık değilse veya sekme tamamen arka plandaysa bildir!
                                 if (chat.chatId !== activeChatId || document.hidden) {
-                                    playNotificationSound();
+                                    playNotificationSound(); // Yumuşak çift bip
                                     
                                     if (document.hidden) {
-                                        startTitleFlash(lastSender);
-                                        showPushNotification(lastSender, lastMsgText, chat.chatId, partner);
+                                        startTitleFlash(lastSender); // Başlığı yak söndür
+                                        showPushNotification(lastSender, lastMsgText, chat.chatId, partner); // Ekran bildirimi fırlat
                                     }
                                 }
                             }
                         } else {
+                            // Zaman damgası takibini güncel tut (Eski mesajların girişte ötmesini engeller)
                             lastProcessedTimes[chat.chatId] = msgTime || 0;
                         }
 
@@ -3051,7 +2990,7 @@
                 console.error("Sohbet listesi dinleme hatası:", err);
                 listContainer.innerHTML = `
                     <div class="p-4 text-xs text-amber-300 bg-amber-500/10 border border-amber-500/20 rounded-2xl leading-relaxed">
-                        Sohbet listesi yüklenemedi. Firestore kurallarını veya bağlantınızı kontrol edin.
+                        Sohbet listesi güvenli sorgu ile yüklenemedi. Firestore index veya kural ayarı gerekebilir.
                     </div>
                 `;
             });
