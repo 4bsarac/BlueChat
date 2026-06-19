@@ -1,8 +1,8 @@
 <!DOCTYPE html>
-<html lang="tr">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>The Sacred Ink</title>
     <!-- Pixel Tarzı Korku/Retro Fontu -->
     <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
@@ -13,84 +13,60 @@
             padding: 0;
         }
 
+        /* Ekranın aşağı kaydırılmasını kesin olarak engelleyen zırh */
+        html, body {
+            overflow: hidden;
+            height: 100vh;
+            width: 100vw;
+            background-color: #030303;
+        }
+
         body {
-            background-color: #050505;
-            color: #8b0000; /* Kan kırmızısı tekinsiz bir renk */
-            font-family: 'Press Start 2P', monospace;
             display: flex;
             justify-content: center;
             align-items: center;
-            min-height: 100vh;
             padding: 20px;
-            overflow-x: hidden;
-            /* Eski CRT monitör efekti gibi hafif bir arka plan çizgisi */
-            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
-            background-size: 100% 4px, 6px 100%;
+            font-family: 'Press Start 2P', monospace;
+            /* Eski CRT monitör efekti */
+            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.4) 50%);
+            background-size: 100% 4px;
         }
 
         .terminal-container {
             width: 100%;
-            max-width: 700px;
+            max-width: 650px;
             background-color: #000;
-            border: 2px solid #5a0000;
-            box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
-            padding: 25px 20px;
-            border-radius: 5px;
-            position: relative;
-        }
-
-        /* Köşedeki eski terminal kırmızı ışığı */
-        .terminal-container::before {
-            content: '';
-            position: absolute;
-            top: 12px;
-            right: 15px;
-            width: 8px;
-            height: 8px;
-            background-color: #ff0000;
-            border-radius: 50%;
-            box-shadow: 0 0 8px #ff0000;
-            animation: blink 1.5s infinite;
+            border: 2px solid #2a0000;
+            box-shadow: 0 0 25px rgba(74, 0, 0, 0.4);
+            padding: 30px 20px;
+            border-radius: 4px;
         }
 
         .dialogue-line {
-            font-size: 10px; /* Pixel fontu küçükken daha nizami durur */
-            line-height: 2;
+            color: #4a0000; /* İstediğiniz o ağır, çok koyu kızıl */
+            font-size: 10px; /* Pixel fontu için ideal büyüklük */
+            line-height: 2.2;
             margin-bottom: 25px;
             word-wrap: break-word;
-            letter-spacing: 1px;
-            text-shadow: 0 0 4px rgba(139, 0, 0, 0.6);
+            letter-spacing: 0.5px;
+            text-shadow: 0 0 2px rgba(74, 0, 0, 0.5);
         }
 
-        /* İngilizce ve Türkçe satırları ayıran hafif soluk renk */
-        .tr-text {
-            color: #4a4a4a;
-            font-size: 9px;
-            line-height: 1.8;
-            margin-top: 8px;
-            display: block;
-            text-shadow: none;
-        }
-
-        /* Yavaşça titreme/korku efekti */
-        @keyframes blink {
-            0%, 100% { opacity: 1; }
-            50% { opacity: 0.3; }
+        /* Son satıra ekstra bir ağırlık katalım */
+        .final-line {
+            margin-bottom: 0;
+            color: #5a0000; 
         }
 
         /* Mobil Uyumluluk Ayarları */
         @media (max-width: 480px) {
             .terminal-container {
-                padding: 15px 12px;
+                padding: 20px 15px;
             }
             .dialogue-line {
                 font-size: 8px;
-                line-height: 2.2;
+                line-height: 2.4;
                 margin-bottom: 20px;
-            }
-            .tr-text {
-                font-size: 7px;
-                line-height: 2;
             }
         }
     </style>
@@ -99,23 +75,19 @@
 
 <div class="terminal-container">
     <div class="dialogue-line">
-        — "What is this?" they asked, casually scrolling through lines full of pure sweat and soul.<br>
-        <span class="tr-text">— "Bu nedir?" diye sordular, saf alın teri ve ruh kokan satırları alelacele yukarı kaydırırken.</span>
+        — "What is this?" they asked, casually scrolling through lines full of pure sweat and soul.
     </div>
 
     <div class="dialogue-line">
-        — "Just plain text," they whispered to one another, completely unaware of the sleepless nights.<br>
-        <span class="tr-text">— "Sadece düz yazı," diye fısıldadılar birbirlerine, uykusuz gecelerden tamamen bihaber.</span>
+        — "Just plain text," they whispered to one another, completely unaware of the sleepless nights.
     </div>
 
     <div class="dialogue-line">
-        — "A simple mechanism," they noted, missing the silent sacrifices made in the dead of winter.<br>
-        <span class="tr-text">— "Basit bir mekanizma işte," diye not düştüler, o çetin kış kıyamette verilen sessiz fedakarlıkları kaçırarak.</span>
+        — "A simple mechanism," they noted, missing the silent sacrifices made in the dead of winter.
     </div>
 
-    <div class="dialogue-line" style="margin-bottom: 0; color: #ff0000;">
-        — And so the pen stopped; for the ink is too sacred to be wasted on those who only see the screen.<br>
-        <span class="tr-text" style="color: #6a0000;">— Ve böylece kalem durdu; zira mürekkep, sadece ekrana bakanlar uğruna israf edilmeyecek kadar mukaddestir.</span>
+    <div class="dialogue-line final-line">
+        — And so the pen stopped; for the ink is too sacred to be wasted on those who only see the screen.
     </div>
 </div>
 
