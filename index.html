@@ -134,6 +134,10 @@
             display: none;
         }
 
+        .message-action-menu button.hidden {
+            display: none;
+        }
+
         .message-action-menu button,
         .icon-chip {
             display: inline-flex;
@@ -698,6 +702,13 @@
         </div>
     </div>
 
+    <div id="undoToast" class="hidden fixed left-1/2 -translate-x-1/2 bottom-24 z-[70] bg-slate-950/95 border border-slate-800 text-slate-100 rounded-2xl shadow-2xl px-4 py-3 min-w-[260px] max-w-[92vw] backdrop-blur-lg">
+        <div class="flex items-center justify-between gap-4">
+            <span id="undoToastText" class="text-xs font-semibold">İşlem yapıldı</span>
+            <button data-action="run-undo-action" class="text-xs font-bold text-blue-300 hover:text-blue-100 transition-colors">Geri al</button>
+        </div>
+    </div>
+
     <!-- JAVASCRIPT GÜVENLİK VE VERİ MANTIĞI -->
     <script>
         // Firebase Konfigürasyonu
@@ -1016,6 +1027,39 @@
             document.getElementById("stickerPanel")?.classList.add("hidden");
         }
 
+        function hideUndoToast() {
+            if (undoToastTimer) {
+                clearTimeout(undoToastTimer);
+                undoToastTimer = null;
+            }
+            undoActionHandler = null;
+            document.getElementById("undoToast")?.classList.add("hidden");
+        }
+
+        function showUndoToast(message = "İşlem yapıldı", undoHandler = null) {
+            if (undoToastTimer) clearTimeout(undoToastTimer);
+            undoActionHandler = typeof undoHandler === "function" ? undoHandler : null;
+            const toast = document.getElementById("undoToast");
+            const textEl = document.getElementById("undoToastText");
+            const undoButton = toast?.querySelector('[data-action="run-undo-action"]');
+            if (textEl) textEl.innerText = message;
+            undoButton?.classList.toggle("hidden", !undoActionHandler);
+            toast?.classList.remove("hidden");
+            undoToastTimer = setTimeout(hideUndoToast, 7000);
+        }
+
+        async function runUndoAction() {
+            if (!undoActionHandler) return;
+            const handler = undoActionHandler;
+            hideUndoToast();
+            try {
+                await handler();
+            } catch (err) {
+                console.error("Geri alma hatası:", err);
+                alert("Geri alma işlemi tamamlanamadı.");
+            }
+        }
+
         function setAppViewportHeight() {
             const height = window.visualViewport?.height || window.innerHeight;
             document.documentElement.style.setProperty("--app-viewport-height", `${Math.round(height)}px`);
@@ -1129,6 +1173,25 @@
             const btn = document.getElementById("scrollBottomBtn");
             if (!btn) return;
             btn.classList.toggle("hidden", isChatNearBottom());
+        }
+
+        function expandMessageHistory() {
+            if (!activeChatId || isExpandingMessages || activeMessageLimit >= MESSAGE_LIMIT_MAX) return;
+            const container = document.getElementById("messageContainer");
+            if (!container) return;
+
+            preserveScrollDistanceFromBottom = container.scrollHeight - container.scrollTop;
+            activeMessageLimit = Math.min(MESSAGE_LIMIT_MAX, activeMessageLimit + MESSAGE_PAGE_SIZE);
+            isExpandingMessages = true;
+            listenMessages();
+        }
+
+        function handleMessageContainerScroll() {
+            const container = document.getElementById("messageContainer");
+            updateScrollBottomButton();
+            if (container && container.scrollTop < 32) {
+                expandMessageHistory();
+            }
         }
 
         function resizeMessageInput() {
@@ -1257,6 +1320,8 @@
         let activeMessageLimit = MESSAGE_PAGE_SIZE;
         let isExpandingMessages = false;
         let preserveScrollDistanceFromBottom = null;
+        let undoActionHandler = null;
+        let undoToastTimer = null;
         let shouldScrollOnNextMessages = false;
         let soundNotificationsEnabled = true;
         const userProfileCache = {};
@@ -2429,22 +2494,51 @@
             const confirmDelete = confirm("Bu mesaj herkes için silinsin mi?");
             if (!confirmDelete) return;
 
-            const messageRef = db.collection("chats").doc(activeChatId).collection("messages").doc(selectedMessageAction.msgId);
-            await messageRef.update({
-                deletedForEveryone: true,
-                deletedAt: Date.now(),
-                deletedBy: currentUser,
-                text: ""
-            });
+            const targetMessageId = selectedMessageAction.msgId;
+            const messageRef = db.collection("chats").doc(activeChatId).collection("messages").doc(targetMessageId);
+            const messageSnap = await messageRef.get();
+            const messageData = messageSnap.data() || {};
 
-            const latest = await db.collection("chats").doc(activeChatId).collection("messages").orderBy("timestamp", "desc").limit(1).get();
-            if (!latest.empty && latest.docs[0].id === selectedMessageAction.msgId) {
-                await db.collection("chats").doc(activeChatId).update({
-                    lastMessageText: "Mesaj silindi",
-                    lastMessageStatus: "sent"
-                });
+            if (!messageSnap.exists || !isOwnSender(messageData.sender) || messageData.deletedForEveryone) {
+                alert("Bu mesaj herkesten silinemiyor.");
+                closeMessageActionMenu();
+                return;
             }
-            closeMessageActionMenu();
+
+            const previousText = sanitizeMessageText(messageData.text);
+            const updateLastMessagePreview = async (previewText) => {
+                const latest = await db.collection("chats").doc(activeChatId).collection("messages").orderBy("timestamp", "desc").limit(1).get();
+                if (!latest.empty && latest.docs[0].id === targetMessageId) {
+                    await db.collection("chats").doc(activeChatId).update({
+                        lastMessageText: previewText,
+                        lastMessageStatus: "sent"
+                    });
+                }
+            };
+
+            try {
+                await messageRef.update({
+                    deletedForEveryone: true,
+                    deletedAt: Date.now(),
+                    deletedBy: currentUser,
+                    text: ""
+                });
+
+                await updateLastMessagePreview("Herkesten silindi");
+                closeMessageActionMenu();
+                showUndoToast("Mesaj herkesten silindi", async () => {
+                    await messageRef.update({
+                        deletedForEveryone: firebase.firestore.FieldValue.delete(),
+                        deletedAt: firebase.firestore.FieldValue.delete(),
+                        deletedBy: firebase.firestore.FieldValue.delete(),
+                        text: previousText
+                    });
+                    await updateLastMessagePreview(previousText);
+                });
+            } catch (err) {
+                console.error("Herkesten silme hatası:", err);
+                alert("Mesaj herkesten silinemedi.");
+            }
         }
 
         document.getElementById("replyPreviewBar").addEventListener("click", (e) => {
@@ -2516,13 +2610,13 @@
 
                     const timeStr = formatTime(msg.timestamp);
                     const isDeletedForEveryone = Boolean(msg.deletedForEveryone);
-                    const messageText = isDeletedForEveryone ? "Mesaj silindi" : sanitizeMessageText(msg.text);
+                    const messageText = isDeletedForEveryone ? "Herkesten silindi" : sanitizeMessageText(msg.text);
                     const msgIdAttr = escapeAttr(msg.id);
                     const senderAttr = escapeAttr(msg.sender);
                     const messageAttr = escapeAttr(messageText);
                     const currentDateKey = dateKey(msg.timestamp);
                     const editedLabel = msg.editedAt && !isDeletedForEveryone ? '<span class="opacity-75">düzenlendi</span>' : "";
-                    const reactionHtml = renderReactionHtml(msg.reactions);
+                    const reactionHtml = isDeletedForEveryone ? "" : renderReactionHtml(msg.reactions);
 
                     if (currentDateKey && currentDateKey !== lastRenderedDateKey) {
                         container.insertAdjacentHTML("beforeend", `<div class="date-divider">${escapeHtml(formatDateDivider(msg.timestamp))}</div>`);
@@ -2667,25 +2761,49 @@
 
             try {
                 if (editingMessageId) {
-                    const editingRef = db.collection("chats").doc(activeChatId).collection("messages").doc(editingMessageId);
+                    const targetMessageId = editingMessageId;
+                    const editingRef = db.collection("chats").doc(activeChatId).collection("messages").doc(targetMessageId);
+                    const editingSnap = await editingRef.get();
+                    const editingData = editingSnap.data() || {};
+
+                    if (!editingSnap.exists || !isOwnSender(editingData.sender) || editingData.deletedForEveryone) {
+                        alert("Bu mesaj düzenlenemiyor.");
+                        cancelEditMessage();
+                        return;
+                    }
+
+                    const previousText = sanitizeMessageText(editingData.text);
+                    const previousEditedAt = editingData.editedAt;
+                    const previousEditedBy = editingData.editedBy;
+                    const updateLastMessagePreview = async (previewText) => {
+                        const latest = await db.collection("chats").doc(activeChatId).collection("messages").orderBy("timestamp", "desc").limit(1).get();
+                        if (!latest.empty && latest.docs[0].id === targetMessageId) {
+                            await db.collection("chats").doc(activeChatId).update({
+                                lastMessageText: previewText,
+                                lastMessageStatus: "sent"
+                            });
+                        }
+                    };
+
                     await editingRef.update({
                         text,
                         editedAt: now,
                         editedBy: currentUser
                     });
 
-                    const latest = await db.collection("chats").doc(activeChatId).collection("messages").orderBy("timestamp", "desc").limit(1).get();
-                    if (!latest.empty && latest.docs[0].id === editingMessageId) {
-                        await db.collection("chats").doc(activeChatId).update({
-                            lastMessageText: text,
-                            lastMessageStatus: "sent"
-                        });
-                    }
+                    await updateLastMessagePreview(text);
 
                     input.value = "";
                     resizeMessageInput();
                     cancelEditMessage();
                     input.focus();
+                    showUndoToast("Mesaj düzenlendi", async () => {
+                        const undoPayload = { text: previousText };
+                        undoPayload.editedAt = previousEditedAt || firebase.firestore.FieldValue.delete();
+                        undoPayload.editedBy = previousEditedBy || firebase.firestore.FieldValue.delete();
+                        await editingRef.update(undoPayload);
+                        await updateLastMessagePreview(previousText);
+                    });
                     return;
                 }
 
@@ -2706,6 +2824,7 @@
                 await newDocRef.update({ id: newDocRef.id });
 
                 await db.collection("chats").doc(activeChatId).update({
+                    lastMessageId: newDocRef.id,
                     lastMessageTime: now,
                     lastMessageText: text,
                     lastMessageSender: currentUser,
@@ -2756,6 +2875,12 @@
                 "preview-theme": () => previewTheme(actionEl.dataset.theme || "sapphire"),
                 "toggle-pin-visibility": () => togglePinVisibility(),
                 "toggle-chat-actions-menu": () => toggleChatActionsMenu(),
+                "toggle-message-search": () => toggleMessageSearch(),
+                "clear-message-search": () => clearMessageSearch(),
+                "open-profile-detail": () => openProfileDetail(),
+                "close-profile-detail": () => closeProfileDetail(),
+                "toggle-pin-chat": () => togglePinChat(),
+                "toggle-mute-chat": () => toggleMuteChat(),
                 "delete-chat-for-me": () => deleteChatForMe(),
                 "open-wallpaper-modal": () => openWallpaperModal(),
                 "close-wallpaper-modal": () => closeWallpaperModal(),
@@ -2763,14 +2888,17 @@
                 "change-bg-image": () => changeBgImage(actionEl.getAttribute("src") || ""),
                 "send-message": () => sendMessage(),
                 "scroll-bottom": () => scrollActiveChatToBottom(),
+                "react-selected-message": () => reactSelectedMessage(actionEl.dataset.reaction || ""),
                 "reply-selected-message": () => replySelectedMessage(),
                 "copy-selected-message": () => copySelectedMessage(),
+                "edit-selected-message": () => editSelectedMessage(),
+                "delete-selected-message-everyone": () => deleteSelectedMessageForEveryone(),
                 "delete-selected-message": () => deleteSelectedMessageForMe(),
                 "cancel-reply": () => cancelReply(),
+                "cancel-edit-message": () => cancelEditMessage(),
+                "run-undo-action": () => runUndoAction(),
                 "choose-avatar-file": () => document.getElementById("settingsAvatarFileInput")?.click(),
-                "clear-selected-avatar": () => clearSelectedAvatar(),
-                "toggle-sticker-panel": () => toggleStickerPanel(),
-                "insert-sticker": () => insertSticker(actionEl.dataset.sticker || "")
+                "clear-selected-avatar": () => clearSelectedAvatar()
             };
 
             if (!actions[action]) return;
@@ -2813,18 +2941,21 @@
             filterVisibleChatRows();
         });
 
+        document.getElementById("messageSearchInput")?.addEventListener("input", (event) => {
+            messageSearchTerm = event.target.value.trim().toLowerCase();
+            filterRenderedMessages();
+        });
+
         document.getElementById("settingsAvatarUrlInput")?.addEventListener("input", updateSettingsAvatarPreview);
         document.getElementById("settingsUsernameInput")?.addEventListener("input", updateSettingsAvatarPreview);
         document.getElementById("settingsAvatarFileInput")?.addEventListener("change", handleAvatarFileSelection);
 
         document.addEventListener("click", handleAppActionClick);
         document.addEventListener("click", (event) => {
-            if (!event.target.closest("#stickerPanel") && !event.target.closest("#stickerToggleBtn")) {
-                closeStickerPanel();
-            }
+            if (!event.target.closest("#messageActionMenu") && !event.target.closest(".message-content")) closeMessageActionMenu();
         });
 
-        document.getElementById("messageContainer").addEventListener("scroll", updateScrollBottomButton);
+        document.getElementById("messageContainer").addEventListener("scroll", handleMessageContainerScroll);
         document.getElementById("activeChatContainer").addEventListener("touchstart", handleChatSwipeStart, { passive: true });
         document.getElementById("activeChatContainer").addEventListener("touchend", handleChatSwipeEnd, { passive: true });
         document.getElementById("chatBackground").addEventListener("click", (event) => {
@@ -2893,10 +3024,12 @@
                         const lastStatus = chat.lastMessageStatus;
                         const unreadCount = Math.max(0, Number((chat.unreadCounts && chat.unreadCounts[myChatKey]) || 0));
                         const isPartnerTyping = chat.typing && chat.typing[partner];
+                        const isPinnedForMe = isChatPinned(chat, myChatKey);
+                        const isMutedForMe = isChatMuted(chat, myChatKey);
 
                         // --- BİLDİRİM TETİKLEME ALGORİTMASI ---
                         const msgTime = chat.lastMessageTime;
-                        if (lastSender && lastSender !== currentUser && msgTime > (lastProcessedTimes[chat.chatId] || 0)) {
+                        if (!isMutedForMe && lastSender && lastSender !== currentUser && msgTime > (lastProcessedTimes[chat.chatId] || 0)) {
                             const isVeryRecent = (Date.now() - msgTime) < 5000; // Son 5 saniye içinde mi geldi?
                             
                             // Zaman kaydını güncelle
@@ -2937,9 +3070,13 @@
                         }
 
                         const previewText = lastMsgText.length > 44 ? `${lastMsgText.slice(0, 44)}...` : lastMsgText;
+                        const statusIcons = `
+                            ${isPinnedForMe ? '<i class="fa-solid fa-thumbtack text-blue-400 text-[10px] mr-1"></i>' : ''}
+                            ${isMutedForMe ? '<i class="fa-regular fa-bell-slash text-slate-500 text-[10px] mr-1"></i>' : ''}
+                        `;
                         const previewHtml = isPartnerTyping
                             ? '<span class="typing-pill">yazıyor <span></span><span></span><span></span></span>'
-                            : `${ticks} ${escapeHtml(previewText)}`;
+                            : `${statusIcons}${ticks} ${escapeHtml(previewText)}`;
 
                         const chatHtml = `
                             <div data-chat-partner="${escapeAttr(partner.toLowerCase())}" class="chat-row ${chat.chatId === activeChatId ? 'chat-row-active' : ''} ${unreadCount > 0 ? 'chat-row-unread' : ''} flex items-center gap-3 p-4 border-b border-slate-900/30 cursor-pointer ${itemBg}">
@@ -2960,8 +3097,8 @@
                                 </div>
                             </div>
                         `;
-                        listContainer.insertAdjacentHTML("beforeend", chatHtml);
-                        const rowEl = listContainer.lastElementChild;
+                        listContainer.insertAdjacentHTML(isPinnedForMe ? "afterbegin" : "beforeend", chatHtml);
+                        const rowEl = isPinnedForMe ? listContainer.firstElementChild : listContainer.lastElementChild;
                         const avatarEl = rowEl?.querySelector("[data-avatar-for]");
                         applyAvatar(avatarEl, partner, userProfileCache[partner]?.avatarUrl);
                         getUserProfile(partner).then((profile) => {
