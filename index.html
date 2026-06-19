@@ -1,0 +1,123 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>The Sacred Ink</title>
+    <!-- Pixel Tarzı Korku/Retro Fontu -->
+    <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            background-color: #050505;
+            color: #8b0000; /* Kan kırmızısı tekinsiz bir renk */
+            font-family: 'Press Start 2P', monospace;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+            overflow-x: hidden;
+            /* Eski CRT monitör efekti gibi hafif bir arka plan çizgisi */
+            background-image: linear-gradient(rgba(18, 16, 16, 0) 50%, rgba(0, 0, 0, 0.25) 50%), linear-gradient(90deg, rgba(255, 0, 0, 0.06), rgba(0, 255, 0, 0.02), rgba(0, 0, 255, 0.06));
+            background-size: 100% 4px, 6px 100%;
+        }
+
+        .terminal-container {
+            width: 100%;
+            max-width: 700px;
+            background-color: #000;
+            border: 2px solid #5a0000;
+            box-shadow: 0 0 20px rgba(139, 0, 0, 0.3);
+            padding: 25px 20px;
+            border-radius: 5px;
+            position: relative;
+        }
+
+        /* Köşedeki eski terminal kırmızı ışığı */
+        .terminal-container::before {
+            content: '';
+            position: absolute;
+            top: 12px;
+            right: 15px;
+            width: 8px;
+            height: 8px;
+            background-color: #ff0000;
+            border-radius: 50%;
+            box-shadow: 0 0 8px #ff0000;
+            animation: blink 1.5s infinite;
+        }
+
+        .dialogue-line {
+            font-size: 10px; /* Pixel fontu küçükken daha nizami durur */
+            line-height: 2;
+            margin-bottom: 25px;
+            word-wrap: break-word;
+            letter-spacing: 1px;
+            text-shadow: 0 0 4px rgba(139, 0, 0, 0.6);
+        }
+
+        /* İngilizce ve Türkçe satırları ayıran hafif soluk renk */
+        .tr-text {
+            color: #4a4a4a;
+            font-size: 9px;
+            line-height: 1.8;
+            margin-top: 8px;
+            display: block;
+            text-shadow: none;
+        }
+
+        /* Yavaşça titreme/korku efekti */
+        @keyframes blink {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.3; }
+        }
+
+        /* Mobil Uyumluluk Ayarları */
+        @media (max-width: 480px) {
+            .terminal-container {
+                padding: 15px 12px;
+            }
+            .dialogue-line {
+                font-size: 8px;
+                line-height: 2.2;
+                margin-bottom: 20px;
+            }
+            .tr-text {
+                font-size: 7px;
+                line-height: 2;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="terminal-container">
+    <div class="dialogue-line">
+        — "What is this?" they asked, casually scrolling through lines full of pure sweat and soul.<br>
+        <span class="tr-text">— "Bu nedir?" diye sordular, saf alın teri ve ruh kokan satırları alelacele yukarı kaydırırken.</span>
+    </div>
+
+    <div class="dialogue-line">
+        — "Just plain text," they whispered to one another, completely unaware of the sleepless nights.<br>
+        <span class="tr-text">— "Sadece düz yazı," diye fısıldadılar birbirlerine, uykusuz gecelerden tamamen bihaber.</span>
+    </div>
+
+    <div class="dialogue-line">
+        — "A simple mechanism," they noted, missing the silent sacrifices made in the dead of winter.<br>
+        <span class="tr-text">— "Basit bir mekanizma işte," diye not düştüler, o çetin kış kıyamette verilen sessiz fedakarlıkları kaçırarak.</span>
+    </div>
+
+    <div class="dialogue-line" style="margin-bottom: 0; color: #ff0000;">
+        — And so the pen stopped; for the ink is too sacred to be wasted on those who only see the screen.<br>
+        <span class="tr-text" style="color: #6a0000;">— Ve böylece kalem durdu; zira mürekkep, sadece ekrana bakanlar uğruna israf edilmeyecek kadar mukaddestir.</span>
+    </div>
+</div>
+
+</body>
+</html>
