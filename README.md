@@ -1,1 +1,1 @@
-beklemede kalin 😜
+aşk Bezirganı
